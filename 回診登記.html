@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>線上預約登記系統</title>
+  <style>
+    /* 基礎響應式與現代化 UI 樣式 */
+    :root { --primary-color: #2563eb; --bg-color: #f8fafc; }
+    body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); padding: 20px; display: flex; justify-content: center; }
+    .card { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .card h2 { text-align: center; color: #1e293b; margin-top: 0; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #475569; font-size: 14px; }
+    input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+    input:focus, textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    button { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button:hover { background-color: #1d4ed8; }
+    button:disabled { background-color: #94a3b8; cursor: not-allowed; }
+    .status-msg { margin-top: 16px; text-align: center; font-weight: bold; min-height: 24px; }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>預約登記表單</h2>
+    <form id="bookingForm">
+      <div class="form-group"><label>預約日期</label><input type="date" id="date" required></div>
+      <div class="form-group"><label>預約時間</label><input type="time" id="time" required></div>
+      <div class="form-group"><label>客戶姓名</label><input type="text" id="name" placeholder="請輸入全名" required></div>
+      <div class="form-group"><label>客戶生日</label><input type="date" id="birthday" required></div>
+      <div class="form-group"><label>負責人員</label><input type="text" id="staff" placeholder="請填寫指定人員" required></div>
+      <div class="form-group"><label>預約內容</label><textarea id="content" rows="3" placeholder="請簡述預約服務或備註事項" required></textarea></div>
+      <button type="submit" id="submitBtn">確認送出預約</button>
+    </form>
+    <div id="statusMsg" class="status-msg"></div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 請將下方單引號內的網址替換為你剛才部署的 GAS Web App URL
+    // ==========================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
+
+    document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+      e.preventDefault(); // 阻止表單預設的重整跳轉
+
+      const submitBtn = document.getElementById('submitBtn');
+      const statusMsg = document.getElementById('statusMsg');
+      
+      // UI 狀態切換：防止重複點擊
+      submitBtn.disabled = true;
+      submitBtn.innerText = '資料傳送中...';
+      statusMsg.className = 'status-msg';
+      statusMsg.innerText = '';
+
+      // 收集表單資料
+      const payload = {
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        name: document.getElementById('name').value,
+        birthday: document.getElementById('birthday').value,
+        staff: document.getElementById('staff').value,
+        content: document.getElementById('content').value
+      };
+
+      try {
+        // 發送請求至 Google Apps Script
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          // 【架構關鍵】：這裡刻意設定為 text/plain，因為若是 application/json，
+          // 瀏覽器會先發出 OPTIONS 請求 (Preflight) 導致 GAS 阻擋報錯 (CORS error)。
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          statusMsg.className = 'status-msg success';
+          statusMsg.innerText = '✅ ' + result.message;
+          document.getElementById('bookingForm').reset(); // 清空表單
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
+        console.error('API Error:', error);
+      } finally {
+        // 恢復按鈕狀態
+        submitBtn.disabled = false;
+        submitBtn.innerText = '確認送出預約';
+      }
+    });
+  </script>
+
+</body>
+</html>
