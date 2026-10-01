@@ -40,15 +40,16 @@
       color: #475569; 
       font-size: 14px; 
     }
-    input, textarea { 
+    input, select, textarea { 
       width: 100%; 
       padding: 10px; 
       border: 1px solid #cbd5e1; 
       border-radius: 6px; 
       box-sizing: border-box; 
       font-size: 15px; 
+      background-color: #fff;
     }
-    input:focus, textarea:focus { 
+    input:focus, select:focus, textarea:focus { 
       outline: none; 
       border-color: var(--primary-color); 
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
@@ -61,7 +62,7 @@
       gap: 12px;
     }
     .time-input-wrap {
-      flex: 1; /* 縮短時間欄位寬度，與按鈕彈性平分 */
+      flex: 1; 
     }
 
     /* 長方形切換按鈕基礎樣式 */
@@ -98,36 +99,56 @@
 
     /* 狀態 1：預設 [要掛號] - 明亮綠色燈號 + 粗體亮藍色圓體 */
     .state-register .status-indicator {
-      background-color: #00ff66; /* 明亮綠色 */
+      background-color: #00ff66;
       box-shadow: 0 0 8px #00ff66, 0 0 12px #22c55e;
       border: 1px solid #16a34a;
     }
     .state-register .status-text {
-      color: #00b4ff; /* 粗體亮藍色 */
+      color: #00b4ff;
       font-weight: 800;
       font-size: 16px;
-      /* 優先套用圓體 */
       font-family: 'HunInn', 'Yuanti TC', 'BiauKai', 'PingFang TC', sans-serif;
       letter-spacing: 0.5px;
     }
 
     /* 狀態 2：[不掛號] - 明亮紅色燈號 + 粗體亮黃色黑體 */
     .state-no-register {
-      background-color: #334155; /* 深色底色襯托亮黃色黑體字 */
+      background-color: #334155;
       border-color: #1e293b;
     }
     .state-no-register .status-indicator {
-      background-color: #ff3344; /* 明亮紅色 */
+      background-color: #ff3344;
       box-shadow: 0 0 8px #ff3344, 0 0 12px #ef4444;
       border: 1px solid #dc2626;
     }
     .state-no-register .status-text {
-      color: #ffea00; /* 粗體亮黃色 */
+      color: #ffea00;
       font-weight: 800;
       font-size: 16px;
-      /* 黑體 */
       font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
       letter-spacing: 0.5px;
+    }
+
+    /* 民國年、月、日三欄並排容器 */
+    .roc-date-container {
+      display: flex;
+      gap: 8px;
+    }
+    .roc-date-item {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 4px;
+    }
+    .roc-date-item input, .roc-date-item select {
+      text-align: center;
+      padding: 10px 4px;
+    }
+    .roc-unit {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
     }
 
     /* 送出按鈕與訊息提示 */
@@ -191,9 +212,23 @@
         <input type="text" id="name" placeholder="請輸入全名" required>
       </div>
 
+      <!-- 客戶生日：民國年月日輸入 -->
       <div class="form-group">
-        <label>客戶生日</label>
-        <input type="date" id="birthday" required>
+        <label>客戶生日 (民國)</label>
+        <div class="roc-date-container">
+          <div class="roc-date-item" style="flex: 1.2;">
+            <input type="number" id="rocYear" placeholder="民國年" min="1" max="150" required>
+            <span class="roc-unit">年</span>
+          </div>
+          <div class="roc-date-item">
+            <input type="number" id="rocMonth" placeholder="月" min="1" max="12" required>
+            <span class="roc-unit">月</span>
+          </div>
+          <div class="roc-date-item">
+            <input type="number" id="rocDay" placeholder="日" min="1" max="31" required>
+            <span class="roc-unit">日</span>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -245,6 +280,24 @@
       const submitBtn = document.getElementById('submitBtn');
       const statusMsg = document.getElementById('statusMsg');
       
+      // 處理民國生日轉換為 YYYY-MM-DD
+      const rocYearVal = parseInt(document.getElementById('rocYear').value, 10);
+      const rocMonthVal = parseInt(document.getElementById('rocMonth').value, 10);
+      const rocDayVal = parseInt(document.getElementById('rocDay').value, 10);
+
+      // 基本防呆檢查
+      if (isNaN(rocYearVal) || isNaN(rocMonthVal) || isNaN(rocDayVal)) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.innerText = '❌ 請完整填寫客戶生日之民國年、月、日';
+        return;
+      }
+
+      // 換算西元年份並補 0 (例如: 75 -> 1986, 5 -> 05)
+      const adYear = rocYearVal + 1911;
+      const formattedMonth = String(rocMonthVal).padStart(2, '0');
+      const formattedDay = String(rocDayVal).padStart(2, '0');
+      const adBirthday = `${adYear}-${formattedMonth}-${formattedDay}`;
+
       submitBtn.disabled = true;
       submitBtn.innerText = '資料傳送中...';
       statusMsg.className = 'status-msg';
@@ -255,10 +308,10 @@
         date: document.getElementById('date').value,
         time: document.getElementById('time').value,
         name: document.getElementById('name').value,
-        birthday: document.getElementById('birthday').value,
+        birthday: adBirthday, // 傳送標準 YYYY-MM-DD 給後端，確保後端相容性
         staff: document.getElementById('staff').value,
         content: document.getElementById('content').value,
-        registerStatus: isRegistering ? '是' : '否' // 綠燈寫入「是」，紅燈寫入「否」
+        registerStatus: isRegistering ? '是' : '否'
       };
 
       try {
@@ -267,7 +320,8 @@
           headers: {
             'Content-Type': 'text/plain;charset=utf-8',
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          redirect: 'follow'
         });
 
         const result = await response.json();
@@ -277,7 +331,7 @@
           statusMsg.innerText = '✅ ' + result.message;
           document.getElementById('bookingForm').reset();
           
-          // 表單重設後還原掛號按鈕為預設值
+          // 還原掛號按鈕為預設值
           isRegistering = true;
           updateRegisterUI();
         } else {
