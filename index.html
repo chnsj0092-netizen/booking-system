@@ -5,19 +5,158 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>線上預約登記系統</title>
   <style>
-    /* 基礎響應式與現代化 UI 樣式 */
-    :root { --primary-color: #2563eb; --bg-color: #f8fafc; }
-    body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); padding: 20px; display: flex; justify-content: center; }
-    .card { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .card h2 { text-align: center; color: #1e293b; margin-top: 0; }
-    .form-group { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; color: #475569; font-size: 14px; }
-    input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
-    input:focus, textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-    button { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background-color: #1d4ed8; }
-    button:disabled { background-color: #94a3b8; cursor: not-allowed; }
-    .status-msg { margin-top: 16px; text-align: center; font-weight: bold; min-height: 24px; }
+    /* 基礎樣式與變數 */
+    :root { 
+      --primary-color: #2563eb; 
+      --bg-color: #f8fafc; 
+    }
+    body { 
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
+      background-color: var(--bg-color); 
+      padding: 20px; 
+      display: flex; 
+      justify-content: center; 
+    }
+    .card { 
+      background: white; 
+      width: 100%; 
+      max-width: 500px; 
+      padding: 30px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    }
+    .card h2 { 
+      text-align: center; 
+      color: #1e293b; 
+      margin-top: 0; 
+    }
+    .form-group { 
+      margin-bottom: 16px; 
+    }
+    label { 
+      display: block; 
+      margin-bottom: 6px; 
+      font-weight: 600; 
+      color: #475569; 
+      font-size: 14px; 
+    }
+    input, textarea { 
+      width: 100%; 
+      padding: 10px; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 6px; 
+      box-sizing: border-box; 
+      font-size: 15px; 
+    }
+    input:focus, textarea:focus { 
+      outline: none; 
+      border-color: var(--primary-color); 
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
+    }
+
+    /* 預約時間與切換按鈕並排容器 */
+    .time-register-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .time-input-wrap {
+      flex: 1; /* 縮短時間欄位寬度，與按鈕彈性平分 */
+    }
+
+    /* 長方形切換按鈕基礎樣式 */
+    .toggle-register-btn {
+      width: 135px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      background-color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+    .toggle-register-btn:hover {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    /* 明亮 LED 圓形指示燈號 */
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    /* 狀態 1：預設 [要掛號] - 明亮綠色燈號 + 粗體亮藍色圓體 */
+    .state-register .status-indicator {
+      background-color: #00ff66; /* 明亮綠色 */
+      box-shadow: 0 0 8px #00ff66, 0 0 12px #22c55e;
+      border: 1px solid #16a34a;
+    }
+    .state-register .status-text {
+      color: #00b4ff; /* 粗體亮藍色 */
+      font-weight: 800;
+      font-size: 16px;
+      /* 優先套用圓體 */
+      font-family: 'HunInn', 'Yuanti TC', 'BiauKai', 'PingFang TC', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    /* 狀態 2：[不掛號] - 明亮紅色燈號 + 粗體亮黃色黑體 */
+    .state-no-register {
+      background-color: #334155; /* 深色底色襯托亮黃色黑體字 */
+      border-color: #1e293b;
+    }
+    .state-no-register .status-indicator {
+      background-color: #ff3344; /* 明亮紅色 */
+      box-shadow: 0 0 8px #ff3344, 0 0 12px #ef4444;
+      border: 1px solid #dc2626;
+    }
+    .state-no-register .status-text {
+      color: #ffea00; /* 粗體亮黃色 */
+      font-weight: 800;
+      font-size: 16px;
+      /* 黑體 */
+      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    /* 送出按鈕與訊息提示 */
+    .submit-btn { 
+      width: 100%; 
+      padding: 12px; 
+      background-color: var(--primary-color); 
+      color: white; 
+      border: none; 
+      border-radius: 6px; 
+      font-size: 16px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      transition: background 0.2s; 
+      margin-top: 10px;
+    }
+    .submit-btn:hover { 
+      background-color: #1d4ed8; 
+    }
+    .submit-btn:disabled { 
+      background-color: #94a3b8; 
+      cursor: not-allowed; 
+    }
+    .status-msg { 
+      margin-top: 16px; 
+      text-align: center; 
+      font-weight: bold; 
+      min-height: 24px; 
+    }
     .success { color: #16a34a; }
     .error { color: #dc2626; }
   </style>
@@ -27,51 +166,104 @@
   <div class="card">
     <h2>預約登記表單</h2>
     <form id="bookingForm">
-      <div class="form-group"><label>預約日期</label><input type="date" id="date" required></div>
-      <div class="form-group"><label>預約時間</label><input type="time" id="time" required></div>
-      <div class="form-group"><label>客戶姓名</label><input type="text" id="name" placeholder="請輸入全名" required></div>
-      <div class="form-group"><label>客戶生日</label><input type="date" id="birthday" required></div>
-      <div class="form-group"><label>負責人員</label><input type="text" id="staff" placeholder="請填寫指定人員" required></div>
-      <div class="form-group"><label>預約內容</label><textarea id="content" rows="3" placeholder="請簡述預約服務或備註事項" required></textarea></div>
-      <button type="submit" id="submitBtn">確認送出預約</button>
+      <div class="form-group">
+        <label>預約日期</label>
+        <input type="date" id="date" required>
+      </div>
+
+      <!-- 預約時間 + 是否掛號按鈕 -->
+      <div class="form-group">
+        <label>預約時間與掛號選項</label>
+        <div class="time-register-container">
+          <div class="time-input-wrap">
+            <input type="time" id="time" required>
+          </div>
+          <!-- 切換按鈕 -->
+          <button type="button" id="toggleRegisterBtn" class="toggle-register-btn state-register" title="點擊切換是否掛號">
+            <span class="status-indicator"></span>
+            <span class="status-text" id="toggleRegisterText">要掛號</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>客戶姓名</label>
+        <input type="text" id="name" placeholder="請輸入全名" required>
+      </div>
+
+      <div class="form-group">
+        <label>客戶生日</label>
+        <input type="date" id="birthday" required>
+      </div>
+
+      <div class="form-group">
+        <label>負責人員</label>
+        <input type="text" id="staff" placeholder="請填寫指定人員" required>
+      </div>
+
+      <div class="form-group">
+        <label>預約內容</label>
+        <textarea id="content" rows="3" placeholder="請簡述預約服務或備註事項" required></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn" class="submit-btn">確認送出預約</button>
     </form>
     <div id="statusMsg" class="status-msg"></div>
   </div>
 
   <script>
     // ==========================================
-    // 請將下方單引號內的網址替換為你剛才部署的 GAS Web App URL
+    // 請將下方引號內的網址替換為你的 GAS Web App URL
     // ==========================================
     const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
 
+    // 掛號按鈕狀態變數：true 代表「要掛號」，false 代表「不掛號」
+    let isRegistering = true;
+    const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
+    const toggleRegisterText = document.getElementById('toggleRegisterText');
+
+    function updateRegisterUI() {
+      if (isRegistering) {
+        toggleRegisterBtn.className = 'toggle-register-btn state-register';
+        toggleRegisterText.innerText = '要掛號';
+      } else {
+        toggleRegisterBtn.className = 'toggle-register-btn state-no-register';
+        toggleRegisterText.innerText = '不掛號';
+      }
+    }
+
+    // 點擊循環切換
+    toggleRegisterBtn.addEventListener('click', function() {
+      isRegistering = !isRegistering;
+      updateRegisterUI();
+    });
+
+    // 表單送出處理
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
-      e.preventDefault(); // 阻止表單預設的重整跳轉
+      e.preventDefault();
 
       const submitBtn = document.getElementById('submitBtn');
       const statusMsg = document.getElementById('statusMsg');
       
-      // UI 狀態切換：防止重複點擊
       submitBtn.disabled = true;
       submitBtn.innerText = '資料傳送中...';
       statusMsg.className = 'status-msg';
       statusMsg.innerText = '';
 
-      // 收集表單資料
+      // 整理要傳送的欄位
       const payload = {
         date: document.getElementById('date').value,
         time: document.getElementById('time').value,
         name: document.getElementById('name').value,
         birthday: document.getElementById('birthday').value,
         staff: document.getElementById('staff').value,
-        content: document.getElementById('content').value
+        content: document.getElementById('content').value,
+        registerStatus: isRegistering ? '是' : '否' // 綠燈寫入「是」，紅燈寫入「否」
       };
 
       try {
-        // 發送請求至 Google Apps Script
         const response = await fetch(API_URL, {
           method: 'POST',
-          // 【架構關鍵】：這裡刻意設定為 text/plain，因為若是 application/json，
-          // 瀏覽器會先發出 OPTIONS 請求 (Preflight) 導致 GAS 阻擋報錯 (CORS error)。
           headers: {
             'Content-Type': 'text/plain;charset=utf-8',
           },
@@ -83,7 +275,11 @@
         if (result.status === 'success') {
           statusMsg.className = 'status-msg success';
           statusMsg.innerText = '✅ ' + result.message;
-          document.getElementById('bookingForm').reset(); // 清空表單
+          document.getElementById('bookingForm').reset();
+          
+          // 表單重設後還原掛號按鈕為預設值
+          isRegistering = true;
+          updateRegisterUI();
         } else {
           throw new Error(result.message);
         }
@@ -92,7 +288,6 @@
         statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
         console.error('API Error:', error);
       } finally {
-        // 恢復按鈕狀態
         submitBtn.disabled = false;
         submitBtn.innerText = '確認送出預約';
       }
