@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>預約登記系統</title>
+  <title>線上預約登記系統</title>
   <style>
     /* 基礎樣式與變數 */
     :root { 
@@ -151,6 +151,35 @@
       white-space: nowrap;
     }
 
+    /* 常用內容標籤容器與樣式 */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .tag-chip {
+      background-color: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .tag-chip:hover {
+      background-color: #e2e8f0;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+    .tag-chip:active {
+      transform: scale(0.96);
+      background-color: #cbd5e1;
+    }
+
     /* 送出按鈕與訊息提示 */
     .submit-btn { 
       width: 100%; 
@@ -231,7 +260,7 @@
         </div>
       </div>
 
-      <!-- 負責人員：改為下拉選單 -->
+      <!-- 負責人員：下拉選單 -->
       <div class="form-group">
         <label>負責人員</label>
         <select id="staff" required>
@@ -239,9 +268,12 @@
         </select>
       </div>
 
+      <!-- 預約內容與快選標籤 -->
       <div class="form-group">
         <label>預約內容</label>
-        <textarea id="content" rows="3" placeholder="請簡述預約服務或備註事項" required></textarea>
+        <textarea id="content" rows="3" placeholder="請簡述預約服務或點擊下方標籤快速填寫" required></textarea>
+        <!-- 快選標籤區 -->
+        <div class="tags-container" id="quickTagsContainer"></div>
       </div>
 
       <button type="submit" id="submitBtn" class="submit-btn">確認送出預約</button>
@@ -253,7 +285,19 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
     const STAFF_CACHE_KEY = 'booking_system_staff_cache';
 
-    // 1. 初始化日期設定（預設今天、不可選過去日期）
+    // 常用預約項目標籤清單
+    const QUICK_TAGS = [
+      '塑型回診',
+      'MiSight回診',
+      '新樂學回診',
+      '星趣控回診',
+      'EIP預約',
+      'CTI預約',
+      '配鏡',
+      '諮詢'
+    ];
+
+    // 1. 初始化日期設定（預設今天、限制不能選擇過去日期）
     function initDateConstraints() {
       const dateInput = document.getElementById('date');
       const now = new Date();
@@ -264,7 +308,38 @@
       }
     }
 
-    // 2. 渲染負責人員下拉選單
+    // 2. 渲染並綁定快選標籤事件（追加填入）
+    function initQuickTags() {
+      const container = document.getElementById('quickTagsContainer');
+      const contentTextarea = document.getElementById('content');
+      container.innerHTML = '';
+
+      QUICK_TAGS.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerText = tag;
+        
+        chip.addEventListener('click', () => {
+          const currentVal = contentTextarea.value.trim();
+          
+          // 若目前內容為空，直接填入
+          if (!currentVal) {
+            contentTextarea.value = tag;
+          } else {
+            // 防呆：若已經包含該標籤文字，則不重複追加
+            const items = currentVal.split(/[，,、\s]+/).filter(Boolean);
+            if (!items.includes(tag)) {
+              contentTextarea.value = currentVal + '，' + tag;
+            }
+          }
+          contentTextarea.focus();
+        });
+
+        container.appendChild(chip);
+      });
+    }
+
+    // 3. 渲染負責人員下拉選單
     function renderStaffOptions(staffList, selectedValue = '') {
       const staffSelect = document.getElementById('staff');
       if (!staffList || staffList.length === 0) {
@@ -281,7 +356,7 @@
       staffSelect.disabled = false;
     }
 
-    // 3. 快取策略載入人員名單（Stale-While-Revalidate）
+    // 4. 快取策略載入人員名單（Stale-While-Revalidate）
     async function loadStaffList() {
       const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
       let cachedList = [];
@@ -303,7 +378,6 @@
         const res = await response.json();
         if (res.status === 'success' && Array.isArray(res.staffList)) {
           const currentVal = document.getElementById('staff').value;
-          // 若快取不存在或資料有異動，更新畫面與本機快取
           if (JSON.stringify(res.staffList) !== JSON.stringify(cachedList)) {
             localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(res.staffList));
             renderStaffOptions(res.staffList, currentVal);
@@ -318,7 +392,7 @@
       }
     }
 
-    // 4. 掛號狀態切換邏輯
+    // 5. 掛號狀態切換邏輯
     let isRegistering = true;
     const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
     const toggleRegisterText = document.getElementById('toggleRegisterText');
@@ -338,7 +412,7 @@
       updateRegisterUI();
     });
 
-    // 5. 民國生日真實性檢查 (防止 2/30, 4/31 等非法日期)
+    // 6. 民國生日真實性檢查 (防止 2/30, 4/31 等非法日期)
     function validateAndFormatRocDate(rocYear, rocMonth, rocDay) {
       if (isNaN(rocYear) || isNaN(rocMonth) || isNaN(rocDay)) {
         return { valid: false, message: '請完整填寫客戶生日之民國年、月、日' };
@@ -370,7 +444,7 @@
       };
     }
 
-    // 6. 表單送出處理
+    // 7. 表單送出處理
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -456,6 +530,7 @@
     // 頁面載入初始化
     window.addEventListener('DOMContentLoaded', () => {
       initDateConstraints();
+      initQuickTags();
       loadStaffList();
     });
   </script>
