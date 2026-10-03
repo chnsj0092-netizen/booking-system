@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>線上預約登記系統</title>
+  <title>預約登記系統</title>
   <style>
     /* 基礎樣式與變數 */
     :root { 
@@ -97,7 +97,7 @@
       transition: all 0.2s ease;
     }
 
-    /* 狀態 1：預設 [要掛號] - 明亮綠色燈號 + 粗體亮藍色圓體 */
+    /* 狀態 1：預設 [要掛號] */
     .state-register .status-indicator {
       background-color: #00ff66;
       box-shadow: 0 0 8px #00ff66, 0 0 12px #22c55e;
@@ -111,7 +111,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* 狀態 2：[不掛號] - 明亮紅色燈號 + 粗體亮黃色黑體 */
+    /* 狀態 2：[不掛號] */
     .state-no-register {
       background-color: #334155;
       border-color: #1e293b;
@@ -231,9 +231,12 @@
         </div>
       </div>
 
+      <!-- 負責人員：改為下拉選單 -->
       <div class="form-group">
         <label>負責人員</label>
-        <input type="text" id="staff" placeholder="請填寫指定人員" required>
+        <select id="staff" required>
+          <option value="" disabled selected>載入人員名單中...</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -247,12 +250,75 @@
   </div>
 
   <script>
-    // ==========================================
-    // 請將下方引號內的網址替換為你的 GAS Web App URL
-    // ==========================================
     const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
+    const STAFF_CACHE_KEY = 'booking_system_staff_cache';
 
-    // 掛號按鈕狀態變數：true 代表「要掛號」，false 代表「不掛號」
+    // 1. 初始化日期設定（預設今天、不可選過去日期）
+    function initDateConstraints() {
+      const dateInput = document.getElementById('date');
+      const now = new Date();
+      const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      dateInput.min = localDateStr;
+      if (!dateInput.value) {
+        dateInput.value = localDateStr;
+      }
+    }
+
+    // 2. 渲染負責人員下拉選單
+    function renderStaffOptions(staffList, selectedValue = '') {
+      const staffSelect = document.getElementById('staff');
+      if (!staffList || staffList.length === 0) {
+        staffSelect.innerHTML = '<option value="" disabled selected>無可選人員</option>';
+        return;
+      }
+
+      let optionsHtml = '<option value="" disabled ' + (!selectedValue ? 'selected' : '') + '>請選擇負責人員</option>';
+      staffList.forEach(name => {
+        const isSelected = (name === selectedValue) ? 'selected' : '';
+        optionsHtml += `<option value="${name}" ${isSelected}>${name}</option>`;
+      });
+      staffSelect.innerHTML = optionsHtml;
+      staffSelect.disabled = false;
+    }
+
+    // 3. 快取策略載入人員名單（Stale-While-Revalidate）
+    async function loadStaffList() {
+      const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
+      let cachedList = [];
+
+      if (cachedData) {
+        try {
+          cachedList = JSON.parse(cachedData);
+          if (Array.isArray(cachedList) && cachedList.length > 0) {
+            renderStaffOptions(cachedList);
+          }
+        } catch (e) {
+          console.warn('快取解析失敗，重新連線獲取', e);
+        }
+      }
+
+      // 背景向 GAS 請求最新名單
+      try {
+        const response = await fetch(API_URL, { credentials: 'omit' });
+        const res = await response.json();
+        if (res.status === 'success' && Array.isArray(res.staffList)) {
+          const currentVal = document.getElementById('staff').value;
+          // 若快取不存在或資料有異動，更新畫面與本機快取
+          if (JSON.stringify(res.staffList) !== JSON.stringify(cachedList)) {
+            localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(res.staffList));
+            renderStaffOptions(res.staffList, currentVal);
+          }
+        }
+      } catch (err) {
+        console.warn('背景同步人員名單失敗，繼續使用快取內容', err);
+        if (cachedList.length === 0) {
+          const staffSelect = document.getElementById('staff');
+          staffSelect.innerHTML = '<option value="" disabled selected>人員載入失敗，請重新整理</option>';
+        }
+      }
+    }
+
+    // 4. 掛號狀態切換邏輯
     let isRegistering = true;
     const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
     const toggleRegisterText = document.getElementById('toggleRegisterText');
@@ -267,52 +333,80 @@
       }
     }
 
-    // 點擊循環切換
     toggleRegisterBtn.addEventListener('click', function() {
       isRegistering = !isRegistering;
       updateRegisterUI();
     });
 
-    // 表單送出處理
+    // 5. 民國生日真實性檢查 (防止 2/30, 4/31 等非法日期)
+    function validateAndFormatRocDate(rocYear, rocMonth, rocDay) {
+      if (isNaN(rocYear) || isNaN(rocMonth) || isNaN(rocDay)) {
+        return { valid: false, message: '請完整填寫客戶生日之民國年、月、日' };
+      }
+      if (rocYear < 1 || rocYear > 150) {
+        return { valid: false, message: '客戶生日年份不合理' };
+      }
+      if (rocMonth < 1 || rocMonth > 12) {
+        return { valid: false, message: '客戶生日月份應介於 1 到 12 之間' };
+      }
+
+      const adYear = rocYear + 1911;
+      const testDate = new Date(adYear, rocMonth - 1, rocDay);
+
+      // 比對實際年、月、日是否完全一致（避免 JavaScript 自動進位轉換）
+      if (
+        testDate.getFullYear() !== adYear ||
+        testDate.getMonth() !== rocMonth - 1 ||
+        testDate.getDate() !== rocDay
+      ) {
+        return { valid: false, message: '生日日期不存在（請確認該月份天數或閏年）' };
+      }
+
+      const formattedMonth = String(rocMonth).padStart(2, '0');
+      const formattedDay = String(rocDay).padStart(2, '0');
+      return { 
+        valid: true, 
+        formattedDate: `${adYear}-${formattedMonth}-${formattedDay}` 
+      };
+    }
+
+    // 6. 表單送出處理
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const submitBtn = document.getElementById('submitBtn');
       const statusMsg = document.getElementById('statusMsg');
-      
-      // 處理民國生日轉換為 YYYY-MM-DD
+
       const rocYearVal = parseInt(document.getElementById('rocYear').value, 10);
       const rocMonthVal = parseInt(document.getElementById('rocMonth').value, 10);
       const rocDayVal = parseInt(document.getElementById('rocDay').value, 10);
 
-      // 基本防呆檢查
-      if (isNaN(rocYearVal) || isNaN(rocMonthVal) || isNaN(rocDayVal)) {
+      // 執行生日防呆檢查
+      const dateValidation = validateAndFormatRocDate(rocYearVal, rocMonthVal, rocDayVal);
+      if (!dateValidation.valid) {
         statusMsg.className = 'status-msg error';
-        statusMsg.innerText = '❌ 請完整填寫客戶生日之民國年、月、日';
+        statusMsg.innerText = '❌ ' + dateValidation.message;
         return;
       }
-
-      // 換算西元年份並補 0 (例如: 75 -> 1986, 5 -> 05)
-      const adYear = rocYearVal + 1911;
-      const formattedMonth = String(rocMonthVal).padStart(2, '0');
-      const formattedDay = String(rocDayVal).padStart(2, '0');
-      const adBirthday = `${adYear}-${formattedMonth}-${formattedDay}`;
 
       submitBtn.disabled = true;
       submitBtn.innerText = '資料傳送中...';
       statusMsg.className = 'status-msg';
       statusMsg.innerText = '';
 
-      // 整理要傳送的欄位
       const payload = {
         date: document.getElementById('date').value,
         time: document.getElementById('time').value,
-        name: document.getElementById('name').value,
-        birthday: adBirthday, // 傳送標準 YYYY-MM-DD 給後端，確保後端相容性
+        name: document.getElementById('name').value.trim(),
+        birthday: dateValidation.formattedDate,
         staff: document.getElementById('staff').value,
-        content: document.getElementById('content').value,
+        content: document.getElementById('content').value.trim(),
         registerStatus: isRegistering ? '是' : '否'
       };
+
+      // 設置 15 秒連線逾時中斷保護
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       try {
         const response = await fetch(API_URL, {
@@ -321,9 +415,11 @@
             'Content-Type': 'text/plain;charset=utf-8',
           },
           body: JSON.stringify(payload),
+          signal: controller.signal,
           redirect: 'follow'
         });
 
+        clearTimeout(timeoutId);
         const result = await response.json();
 
         if (result.status === 'success') {
@@ -331,20 +427,36 @@
           statusMsg.innerText = '✅ ' + result.message;
           document.getElementById('bookingForm').reset();
           
-          // 還原掛號按鈕為預設值
+          // 還原表單各狀態
+          initDateConstraints();
           isRegistering = true;
           updateRegisterUI();
+          
+          // 重新載入人員選單預設狀態
+          const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
+          if (cachedData) renderStaffOptions(JSON.parse(cachedData));
         } else {
           throw new Error(result.message);
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         statusMsg.className = 'status-msg error';
-        statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
+        if (error.name === 'AbortError') {
+          statusMsg.innerText = '❌ 連線逾時，請檢查網路狀況後再試一次。';
+        } else {
+          statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
+        }
         console.error('API Error:', error);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = '確認送出預約';
       }
+    });
+
+    // 頁面載入初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      initDateConstraints();
+      loadStaffList();
     });
   </script>
 
