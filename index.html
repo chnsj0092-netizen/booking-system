@@ -259,6 +259,25 @@
       letter-spacing: 0.5px;
     }
 
+    /* 動態指定醫師欄位群組（非 1 時展開） */
+    .doctor-dynamic-group {
+      display: none;
+      animation: fadeIn 0.25s ease;
+      background-color: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .doctor-dynamic-group label {
+      color: #c2410c;
+    }
+    .doctor-dynamic-hint {
+      font-size: 12px;
+      color: #ea580c;
+      margin-top: 4px;
+    }
+
     /* 民國年、月、日三欄並排容器 */
     .roc-date-container {
       display: flex;
@@ -358,7 +377,7 @@
           </button>
         </div>
 
-        <!-- 當日已預約行程展開區塊 (方案 A) -->
+        <!-- 當日已預約行程展開區塊 -->
         <div id="scheduleDrawer" class="schedule-drawer">
           <div class="schedule-drawer-header">
             <span class="schedule-drawer-title" id="scheduleDrawerTitle">當日預約清單</span>
@@ -381,6 +400,13 @@
             <span class="status-text" id="toggleRegisterText">要掛號</span>
           </button>
         </div>
+      </div>
+
+      <!-- 動態指定醫師輸入框（當門診表非 1 時動態展開） -->
+      <div id="doctorGroup" class="doctor-dynamic-group">
+        <label for="doctor">指定掛號醫師</label>
+        <input type="text" id="doctor" placeholder="雙診! 請輸入要掛號的醫師">
+        <div class="doctor-dynamic-hint">⚠️️ 雙診! 請輸入要掛號的醫師。</div>
       </div>
 
       <div class="form-group">
@@ -429,8 +455,9 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwx2POJUwS81uoO9WwXTidoNGKaRonOXJNYBgG6hdx1kyWu-RST1EW2boq8Lmj2OCU/exec';
     const STAFF_CACHE_KEY = 'booking_system_staff_cache';
+    const CLINIC_SCHEDULE_CACHE_KEY = 'booking_system_clinic_schedule_cache'; // 門診表快取鍵
 
     // 常用預約項目標籤清單
     const QUICK_TAGS = [
@@ -444,7 +471,12 @@
       '諮詢'
     ];
 
+    // 全域變數：儲存門診表二維陣列資料
+    let clinicScheduleData = null;
+
+    // ==========================================
     // 1. 初始化日期設定
+    // ==========================================
     function initDateConstraints() {
       const dateInput = document.getElementById('date');
       const now = new Date();
@@ -455,7 +487,9 @@
       }
     }
 
+    // ==========================================
     // 2. 渲染並綁定快選標籤事件
+    // ==========================================
     function initQuickTags() {
       const container = document.getElementById('quickTagsContainer');
       const contentTextarea = document.getElementById('content');
@@ -483,7 +517,9 @@
       });
     }
 
+    // ==========================================
     // 3. 渲染負責人員下拉選單
+    // ==========================================
     function renderStaffOptions(staffList, selectedValue = '') {
       const staffSelect = document.getElementById('staff');
       if (!staffList || staffList.length === 0) {
@@ -500,7 +536,9 @@
       staffSelect.disabled = false;
     }
 
+    // ==========================================
     // 4. 快取策略載入人員名單（Stale-While-Revalidate）
+    // ==========================================
     async function loadStaffList() {
       const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
       let cachedList = [];
@@ -535,7 +573,143 @@
       }
     }
 
-    // 5. 當日預約查詢功能
+    // ==========================================
+    // 5. 門診表載入與快取策略（方案 A：Stale-While-Revalidate）
+    // ==========================================
+    async function loadClinicSchedule() {
+      const cachedData = localStorage.getItem(CLINIC_SCHEDULE_CACHE_KEY);
+      if (cachedData) {
+        try {
+          clinicScheduleData = JSON.parse(cachedData);
+          checkClinicDoctorRequirement(); // 快取載入後立即執行一次檢查
+        } catch (e) {
+          console.warn('門診表快取解析失敗', e);
+        }
+      }
+
+      try {
+        const response = await fetch(`${API_URL}?action=getClinicSchedule`, { credentials: 'omit' });
+        const res = await response.json();
+        if (res.status === 'success' && Array.isArray(res.schedule)) {
+          clinicScheduleData = res.schedule;
+          localStorage.setItem(CLINIC_SCHEDULE_CACHE_KEY, JSON.stringify(res.schedule));
+          checkClinicDoctorRequirement(); // 最新資料更新後再次確認
+        }
+      } catch (err) {
+        console.warn('載入門診表失敗，繼續使用現有狀態', err);
+      }
+    }
+
+    // ==========================================
+    // 6. 即時監聽與判定是否需輸入指定醫師
+    // ==========================================
+    /**
+     * 依時間字串判斷所屬診別
+     */
+    function getClinicSessionName(timeStr) {
+      if (!timeStr) return '';
+      if (timeStr >= '09:00' && timeStr <= '12:00') return '早診';
+      if (timeStr > '12:00' && timeStr <= '17:00') return '午診';
+      if (timeStr > '17:00' && timeStr <= '21:00') return '晚診';
+      return '';
+    }
+
+    /**
+     * 核心邏輯：即時檢查日期與時間對照門診表的數值
+     * - 週日不執行判斷（getDay() === 0）
+     * - 若門診表數值不是 '1'（NOT 邏輯），展開指定醫師輸入框並設為必填
+     * - 若為 '1'，收合並清空輸入框
+     */
+    function checkClinicDoctorRequirement() {
+      const dateInput = document.getElementById('date');
+      const timeInput = document.getElementById('time');
+      const doctorGroup = document.getElementById('doctorGroup');
+      const doctorInput = document.getElementById('doctor');
+
+      const dateVal = dateInput.value;
+      const timeVal = timeInput.value;
+
+      // 若尚未選擇完整日期或時間，或是門診表尚未載入完成，隱藏輸入框
+      if (!dateVal || !timeVal || !clinicScheduleData) {
+        doctorGroup.style.display = 'none';
+        doctorInput.required = false;
+        return;
+      }
+
+      // 取得星期幾（避免時區偏差，採用分割字串精確建構 Date 物件）
+      const [year, month, day] = dateVal.split('-').map(Number);
+      const targetDate = new Date(year, month - 1, day);
+      const dayOfWeek = targetDate.getDay(); // 0 為週日, 1 為週一, ..., 6 為週六
+
+      // 規則：週日不需要執行此判斷
+      if (dayOfWeek === 0) {
+        doctorGroup.style.display = 'none';
+        doctorInput.required = false;
+        doctorInput.value = '';
+        return;
+      }
+
+      // 取得當前診別
+      const session = getClinicSessionName(timeVal);
+      if (!session) {
+        doctorGroup.style.display = 'none';
+        doctorInput.required = false;
+        return;
+      }
+
+      // 比對門診表工作表結構
+      // 假設第一列為表頭（包含週一到週六），列首欄為診別名稱（早診、午診、晚診）
+      const headers = clinicScheduleData[0];
+      const weekDayNames = ['', '週一', '週二', '週三', '週四', '週五', '週六'];
+      const targetWeekDayName = weekDayNames[dayOfWeek];
+
+      // 尋找對應的星期欄位索引
+      let targetColIndex = -1;
+      for (let c = 0; c < headers.length; c++) {
+        const headerStr = String(headers[c] || '').trim();
+        if (headerStr.includes(targetWeekDayName) || headerStr.includes(String(dayOfWeek))) {
+          targetColIndex = c;
+          break;
+        }
+      }
+
+      // 尋找對應的診別列索引
+      let targetRowIndex = -1;
+      for (let r = 1; r < clinicScheduleData.length; r++) {
+        const sessionName = String(clinicScheduleData[r][0] || '').trim();
+        if (sessionName.includes(session)) {
+          targetRowIndex = r;
+          break;
+        }
+      }
+
+      // 若成功定位到門診表格位
+      if (targetRowIndex !== -1 && targetColIndex !== -1) {
+        const cellValue = String(clinicScheduleData[targetRowIndex][targetColIndex] || '').trim();
+
+        // NOT 邏輯：只要內容不是 1，即觸發展開並要求輸入醫師
+        if (cellValue !== '1') {
+          doctorGroup.style.display = 'block';
+          doctorInput.required = true;
+          return;
+        }
+      }
+
+      // 條件不成立（為 1 或查無特定限制），隱藏並清除
+      doctorGroup.style.display = 'none';
+      doctorInput.required = false;
+      doctorInput.value = '';
+    }
+
+    // 監聽日期與時間變更事件
+    document.getElementById('date').addEventListener('change', checkClinicDoctorRequirement);
+    document.getElementById('date').addEventListener('input', checkClinicDoctorRequirement);
+    document.getElementById('time').addEventListener('change', checkClinicDoctorRequirement);
+    document.getElementById('time').addEventListener('input', checkClinicDoctorRequirement);
+
+    // ==========================================
+    // 7. 當日預約查詢功能
+    // ==========================================
     const queryScheduleBtn = document.getElementById('queryScheduleBtn');
     const scheduleDrawer = document.getElementById('scheduleDrawer');
     const scheduleDrawerTitle = document.getElementById('scheduleDrawerTitle');
@@ -593,7 +767,9 @@
       queryAppointments(selectedDate);
     });
 
-    // 6. 掛號狀態切換邏輯
+    // ==========================================
+    // 8. 掛號狀態切換邏輯
+    // ==========================================
     let isRegistering = true;
     const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
     const toggleRegisterText = document.getElementById('toggleRegisterText');
@@ -613,7 +789,9 @@
       updateRegisterUI();
     });
 
-    // 7. 民國生日真實性檢查
+    // ==========================================
+    // 9. 民國生日真實性檢查
+    // ==========================================
     function validateAndFormatRocDate(rocYear, rocMonth, rocDay) {
       if (isNaN(rocYear) || isNaN(rocMonth) || isNaN(rocDay)) {
         return { valid: false, message: '請完整填寫客戶生日之民國年、月、日' };
@@ -644,7 +822,9 @@
       };
     }
 
-    // 8. 表單送出處理
+    // ==========================================
+    // 10. 表單送出處理
+    // ==========================================
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -668,6 +848,8 @@
       statusMsg.innerText = '';
 
       const submittedDate = document.getElementById('date').value;
+      
+      // 封裝表單資料，包含指定醫師 doctor
       const payload = {
         date: submittedDate,
         time: document.getElementById('time').value,
@@ -675,7 +857,8 @@
         birthday: dateValidation.formattedDate,
         staff: document.getElementById('staff').value,
         content: document.getElementById('content').value.trim(),
-        registerStatus: isRegistering ? '是' : '否'
+        registerStatus: isRegistering ? '是' : '否',
+        doctor: document.getElementById('doctor').value.trim()
       };
 
       const controller = new AbortController();
@@ -703,6 +886,7 @@
           initDateConstraints();
           isRegistering = true;
           updateRegisterUI();
+          checkClinicDoctorRequirement(); // 重設醫師欄位狀態
           
           const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
           if (cachedData) renderStaffOptions(JSON.parse(cachedData));
@@ -729,11 +913,14 @@
       }
     });
 
+    // ==========================================
     // 頁面載入初始化
+    // ==========================================
     window.addEventListener('DOMContentLoaded', () => {
       initDateConstraints();
       initQuickTags();
       loadStaffList();
+      loadClinicSchedule(); // 載入門診表快取與背景同步
     });
   </script>
 
