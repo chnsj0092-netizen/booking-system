@@ -55,6 +55,136 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
     }
 
+    /* 日期輸入與查詢按鈕並排容器 */
+    .date-action-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .date-input-wrap {
+      flex: 1;
+    }
+    .query-schedule-btn {
+      width: 110px;
+      height: 42px;
+      background-color: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .query-schedule-btn:hover {
+      background-color: #e2e8f0;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+    .query-schedule-btn:disabled {
+      background-color: #f8fafc;
+      color: #94a3b8;
+      cursor: not-allowed;
+      border-color: #e2e8f0;
+    }
+
+    /* 當日預約清單展開抽屜容器 */
+    .schedule-drawer {
+      margin-top: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .schedule-drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+    .schedule-drawer-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .schedule-drawer-close {
+      font-size: 12px;
+      color: #94a3b8;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    .schedule-drawer-close:hover {
+      color: #475569;
+    }
+
+    /* 時間軸清單項目 */
+    .schedule-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid var(--primary-color);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+    .schedule-item-time {
+      font-weight: 700;
+      color: #1e293b;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+    .schedule-item-name {
+      font-weight: 600;
+      color: #334155;
+      flex: 1;
+      margin: 0 10px;
+      text-align: left;
+    }
+    .schedule-item-staff {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .schedule-empty {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      padding: 8px 0;
+    }
+
     /* 預約時間與切換按鈕並排容器 */
     .time-register-container {
       display: flex;
@@ -216,9 +346,26 @@
   <div class="card">
     <h2>預約登記表單</h2>
     <form id="bookingForm">
+      <!-- 預約日期 + 查詢按鈕 -->
       <div class="form-group">
         <label>預約日期</label>
-        <input type="date" id="date" required>
+        <div class="date-action-container">
+          <div class="date-input-wrap">
+            <input type="date" id="date" required>
+          </div>
+          <button type="button" id="queryScheduleBtn" class="query-schedule-btn">
+            🔍 查詢預約
+          </button>
+        </div>
+
+        <!-- 當日已預約行程展開區塊 (方案 A) -->
+        <div id="scheduleDrawer" class="schedule-drawer">
+          <div class="schedule-drawer-header">
+            <span class="schedule-drawer-title" id="scheduleDrawerTitle">當日預約清單</span>
+            <button type="button" class="schedule-drawer-close" id="closeDrawerBtn">收合 ✕</button>
+          </div>
+          <ul class="schedule-list" id="scheduleListContainer"></ul>
+        </div>
       </div>
 
       <!-- 預約時間 + 是否掛號按鈕 -->
@@ -297,7 +444,7 @@
       '諮詢'
     ];
 
-    // 1. 初始化日期設定（預設今天、限制不能選擇過去日期）
+    // 1. 初始化日期設定
     function initDateConstraints() {
       const dateInput = document.getElementById('date');
       const now = new Date();
@@ -308,7 +455,7 @@
       }
     }
 
-    // 2. 渲染並綁定快選標籤事件（追加填入）
+    // 2. 渲染並綁定快選標籤事件
     function initQuickTags() {
       const container = document.getElementById('quickTagsContainer');
       const contentTextarea = document.getElementById('content');
@@ -321,12 +468,9 @@
         
         chip.addEventListener('click', () => {
           const currentVal = contentTextarea.value.trim();
-          
-          // 若目前內容為空，直接填入
           if (!currentVal) {
             contentTextarea.value = tag;
           } else {
-            // 防呆：若已經包含該標籤文字，則不重複追加
             const items = currentVal.split(/[，,、\s]+/).filter(Boolean);
             if (!items.includes(tag)) {
               contentTextarea.value = currentVal + '，' + tag;
@@ -372,9 +516,8 @@
         }
       }
 
-      // 背景向 GAS 請求最新名單
       try {
-        const response = await fetch(API_URL, { credentials: 'omit' });
+        const response = await fetch(`${API_URL}?action=getStaff`, { credentials: 'omit' });
         const res = await response.json();
         if (res.status === 'success' && Array.isArray(res.staffList)) {
           const currentVal = document.getElementById('staff').value;
@@ -392,7 +535,65 @@
       }
     }
 
-    // 5. 掛號狀態切換邏輯
+    // 5. 當日預約查詢功能
+    const queryScheduleBtn = document.getElementById('queryScheduleBtn');
+    const scheduleDrawer = document.getElementById('scheduleDrawer');
+    const scheduleDrawerTitle = document.getElementById('scheduleDrawerTitle');
+    const scheduleListContainer = document.getElementById('scheduleListContainer');
+    const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+
+    closeDrawerBtn.addEventListener('click', () => {
+      scheduleDrawer.style.display = 'none';
+    });
+
+    async function queryAppointments(selectedDate) {
+      if (!selectedDate) {
+        alert('請先選擇預約日期');
+        return;
+      }
+
+      queryScheduleBtn.disabled = true;
+      queryScheduleBtn.innerText = '查詢中...';
+      scheduleDrawer.style.display = 'block';
+      scheduleDrawerTitle.innerText = `${selectedDate} 預約行程 (08:00~21:00)`;
+      scheduleListContainer.innerHTML = '<li class="schedule-empty">⏳ 正在連線讀取日曆行程...</li>';
+
+      try {
+        const response = await fetch(`${API_URL}?action=getAppointments&date=${encodeURIComponent(selectedDate)}`, {
+          credentials: 'omit'
+        });
+        const res = await response.json();
+
+        if (res.status === 'success') {
+          const list = res.appointments || [];
+          if (list.length === 0) {
+            scheduleListContainer.innerHTML = '<li class="schedule-empty">💡 當日營業時段尚無任何預約</li>';
+          } else {
+            scheduleListContainer.innerHTML = list.map(item => `
+              <li class="schedule-item">
+                <span class="schedule-item-time">${item.start} - ${item.end}</span>
+                <span class="schedule-item-name">${item.name}</span>
+                <span class="schedule-item-staff">${item.staff}</span>
+              </li>
+            `).join('');
+          }
+        } else {
+          throw new Error(res.message);
+        }
+      } catch (err) {
+        scheduleListContainer.innerHTML = `<li class="schedule-empty error">❌ 查詢失敗：${err.message || '連線逾時'}</li>`;
+      } finally {
+        queryScheduleBtn.disabled = false;
+        queryScheduleBtn.innerText = '🔍 查詢預約';
+      }
+    }
+
+    queryScheduleBtn.addEventListener('click', () => {
+      const selectedDate = document.getElementById('date').value;
+      queryAppointments(selectedDate);
+    });
+
+    // 6. 掛號狀態切換邏輯
     let isRegistering = true;
     const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
     const toggleRegisterText = document.getElementById('toggleRegisterText');
@@ -412,7 +613,7 @@
       updateRegisterUI();
     });
 
-    // 6. 民國生日真實性檢查 (防止 2/30, 4/31 等非法日期)
+    // 7. 民國生日真實性檢查
     function validateAndFormatRocDate(rocYear, rocMonth, rocDay) {
       if (isNaN(rocYear) || isNaN(rocMonth) || isNaN(rocDay)) {
         return { valid: false, message: '請完整填寫客戶生日之民國年、月、日' };
@@ -427,7 +628,6 @@
       const adYear = rocYear + 1911;
       const testDate = new Date(adYear, rocMonth - 1, rocDay);
 
-      // 比對實際年、月、日是否完全一致（避免 JavaScript 自動進位轉換）
       if (
         testDate.getFullYear() !== adYear ||
         testDate.getMonth() !== rocMonth - 1 ||
@@ -444,7 +644,7 @@
       };
     }
 
-    // 7. 表單送出處理
+    // 8. 表單送出處理
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -455,7 +655,6 @@
       const rocMonthVal = parseInt(document.getElementById('rocMonth').value, 10);
       const rocDayVal = parseInt(document.getElementById('rocDay').value, 10);
 
-      // 執行生日防呆檢查
       const dateValidation = validateAndFormatRocDate(rocYearVal, rocMonthVal, rocDayVal);
       if (!dateValidation.valid) {
         statusMsg.className = 'status-msg error';
@@ -468,8 +667,9 @@
       statusMsg.className = 'status-msg';
       statusMsg.innerText = '';
 
+      const submittedDate = document.getElementById('date').value;
       const payload = {
-        date: document.getElementById('date').value,
+        date: submittedDate,
         time: document.getElementById('time').value,
         name: document.getElementById('name').value.trim(),
         birthday: dateValidation.formattedDate,
@@ -478,7 +678,6 @@
         registerStatus: isRegistering ? '是' : '否'
       };
 
-      // 設置 15 秒連線逾時中斷保護
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -501,14 +700,17 @@
           statusMsg.innerText = '✅ ' + result.message;
           document.getElementById('bookingForm').reset();
           
-          // 還原表單各狀態
           initDateConstraints();
           isRegistering = true;
           updateRegisterUI();
           
-          // 重新載入人員選單預設狀態
           const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
           if (cachedData) renderStaffOptions(JSON.parse(cachedData));
+
+          // 若目前清單處於展開狀態，自動同步最新預約
+          if (scheduleDrawer.style.display === 'block') {
+            queryAppointments(submittedDate);
+          }
         } else {
           throw new Error(result.message);
         }
