@@ -405,8 +405,8 @@
       <!-- 動態指定醫師輸入框（當門診表非 1 時動態展開） -->
       <div id="doctorGroup" class="doctor-dynamic-group">
         <label for="doctor">指定掛號醫師</label>
-        <input type="text" id="doctor" placeholder="雙診! 請輸入要掛號的醫師">
-        <div class="doctor-dynamic-hint">⚠️️ 雙診! 請輸入要掛號的醫師。</div>
+        <input type="text" id="doctor" placeholder="雙診! 請輸入要預約的醫生">
+        <div class="doctor-dynamic-hint">⚠️ 雙診! 請輸入要預約的醫生。</div>
       </div>
 
       <div class="form-group">
@@ -455,7 +455,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwx2POJUwS81uoO9WwXTidoNGKaRonOXJNYBgG6hdx1kyWu-RST1EW2boq8Lmj2OCU/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
     const STAFF_CACHE_KEY = 'booking_system_staff_cache';
     const CLINIC_SCHEDULE_CACHE_KEY = 'booking_system_clinic_schedule_cache'; // 門診表快取鍵
 
