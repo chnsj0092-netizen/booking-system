@@ -8,6 +8,8 @@
     /* 基礎樣式與變數 */
     :root { 
       --primary-color: #2563eb; 
+      --warning-color: #ea580c;
+      --danger-color: #dc2626;
       --bg-color: #f8fafc; 
     }
     body { 
@@ -20,7 +22,7 @@
     .card { 
       background: white; 
       width: 100%; 
-      max-width: 500px; 
+      max-width: 520px; 
       padding: 30px; 
       border-radius: 12px; 
       box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
@@ -29,7 +31,40 @@
       text-align: center; 
       color: #1e293b; 
       margin-top: 0; 
+      margin-bottom: 20px;
     }
+
+    /* 改期模式提示條 */
+    .edit-mode-banner {
+      display: none;
+      background-color: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      color: #9a3412;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .edit-mode-banner.active {
+      display: flex;
+      animation: fadeIn 0.25s ease;
+    }
+    .cancel-edit-btn {
+      background: #ea580c;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .cancel-edit-btn:hover {
+      background: #c2410c;
+    }
+
     .form-group { 
       margin-bottom: 16px; 
     }
@@ -138,11 +173,11 @@
       list-style: none;
       margin: 0;
       padding: 0;
-      max-height: 180px;
+      max-height: 240px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
     .schedule-item {
       display: flex;
@@ -151,32 +186,70 @@
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-left: 3px solid var(--primary-color);
-      border-radius: 4px;
-      padding: 6px 10px;
+      border-radius: 6px;
+      padding: 8px 10px;
       font-size: 13px;
+      gap: 6px;
+    }
+    .schedule-item-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
     }
     .schedule-item-time {
       font-weight: 700;
       color: #1e293b;
       font-family: monospace;
-      letter-spacing: 0.5px;
+      white-space: nowrap;
     }
     .schedule-item-name {
       font-weight: 600;
       color: #334155;
-      flex: 1;
-      margin: 0 10px;
-      text-align: left;
+      margin: 0 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .schedule-item-staff {
       background: #eff6ff;
       color: #1d4ed8;
       border: 1px solid #bfdbfe;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 11px;
       font-weight: 600;
       white-space: nowrap;
+    }
+    .schedule-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .item-btn {
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-edit {
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .btn-edit:hover {
+      background: #fde68a;
+    }
+    .btn-delete {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .btn-delete:hover {
+      background: #fecaca;
     }
     .schedule-empty {
       text-align: center;
@@ -185,7 +258,7 @@
       padding: 8px 0;
     }
 
-    /* 預約時間與切換按鈕並排容器 */
+    /* 預約時間與切換按鈕容器 */
     .time-register-container {
       display: flex;
       align-items: center;
@@ -195,7 +268,6 @@
       flex: 1; 
     }
 
-    /* 長方形切換按鈕基礎樣式 */
     .toggle-register-btn {
       width: 135px;
       height: 42px;
@@ -216,8 +288,6 @@
     .toggle-register-btn:hover {
       box-shadow: 0 2px 6px rgba(0,0,0,0.12);
     }
-
-    /* 明亮 LED 圓形指示燈號 */
     .status-indicator {
       width: 12px;
       height: 12px;
@@ -226,22 +296,17 @@
       flex-shrink: 0;
       transition: all 0.2s ease;
     }
-
-    /* 狀態 1：預設 [要掛號] */
     .state-register .status-indicator {
       background-color: #00ff66;
       box-shadow: 0 0 8px #00ff66, 0 0 12px #22c55e;
       border: 1px solid #16a34a;
     }
     .state-register .status-text {
-      color: #00b4ff;
+      color: #0284c7;
       font-weight: 800;
-      font-size: 16px;
-      font-family: 'HunInn', 'Yuanti TC', 'BiauKai', 'PingFang TC', sans-serif;
+      font-size: 15px;
       letter-spacing: 0.5px;
     }
-
-    /* 狀態 2：[不掛號] */
     .state-no-register {
       background-color: #334155;
       border-color: #1e293b;
@@ -252,14 +317,13 @@
       border: 1px solid #dc2626;
     }
     .state-no-register .status-text {
-      color: #ffea00;
+      color: #facc15;
       font-weight: 800;
-      font-size: 16px;
-      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+      font-size: 15px;
       letter-spacing: 0.5px;
     }
 
-    /* 動態指定醫師欄位群組（非 1 時展開） */
+    /* 動態指定醫師 */
     .doctor-dynamic-group {
       display: none;
       animation: fadeIn 0.25s ease;
@@ -278,7 +342,7 @@
       margin-top: 4px;
     }
 
-    /* 民國年、月、日三欄並排容器 */
+    /* 民國年月日 */
     .roc-date-container {
       display: flex;
       gap: 8px;
@@ -289,7 +353,7 @@
       flex: 1;
       gap: 4px;
     }
-    .roc-date-item input, .roc-date-item select {
+    .roc-date-item input {
       text-align: center;
       padding: 10px 4px;
     }
@@ -300,7 +364,7 @@
       white-space: nowrap;
     }
 
-    /* 常用內容標籤容器與樣式 */
+    /* 快選標籤 */
     .tags-container {
       display: flex;
       flex-wrap: wrap;
@@ -324,12 +388,8 @@
       color: #0f172a;
       border-color: #cbd5e1;
     }
-    .tag-chip:active {
-      transform: scale(0.96);
-      background-color: #cbd5e1;
-    }
 
-    /* 送出按鈕與訊息提示 */
+    /* 送出按鈕 */
     .submit-btn { 
       width: 100%; 
       padding: 12px; 
@@ -345,6 +405,12 @@
     }
     .submit-btn:hover { 
       background-color: #1d4ed8; 
+    }
+    .submit-btn.reschedule-mode {
+      background-color: var(--warning-color);
+    }
+    .submit-btn.reschedule-mode:hover {
+      background-color: #c2410c;
     }
     .submit-btn:disabled { 
       background-color: #94a3b8; 
@@ -363,7 +429,14 @@
 <body>
 
   <div class="card">
-    <h2>預約登記表單</h2>
+    <h2 id="formTitle">預約登記表單</h2>
+
+    <!-- 改期狀態提示橫幅 -->
+    <div id="editModeBanner" class="edit-mode-banner">
+      <span id="editModeText">⚠️ 正在改期：王小明 原預約 (10/14)</span>
+      <button type="button" id="cancelEditBtn" class="cancel-edit-btn">放棄改期</button>
+    </div>
+
     <form id="bookingForm">
       <!-- 預約日期 + 查詢按鈕 -->
       <div class="form-group">
@@ -394,7 +467,6 @@
           <div class="time-input-wrap">
             <input type="time" id="time" required>
           </div>
-          <!-- 切換按鈕 -->
           <button type="button" id="toggleRegisterBtn" class="toggle-register-btn state-register" title="點擊切換是否掛號">
             <span class="status-indicator"></span>
             <span class="status-text" id="toggleRegisterText">要掛號</span>
@@ -402,7 +474,7 @@
         </div>
       </div>
 
-      <!-- 動態指定醫師輸入框（當門診表非 1 時動態展開） -->
+      <!-- 動態指定醫師 -->
       <div id="doctorGroup" class="doctor-dynamic-group">
         <label for="doctor">指定掛號醫師</label>
         <input type="text" id="doctor" placeholder="雙診! 請輸入要預約的醫生">
@@ -433,7 +505,7 @@
         </div>
       </div>
 
-      <!-- 負責人員：下拉選單 -->
+      <!-- 負責人員 -->
       <div class="form-group">
         <label>負責人員</label>
         <select id="staff" required>
@@ -445,7 +517,6 @@
       <div class="form-group">
         <label>預約內容</label>
         <textarea id="content" rows="3" placeholder="請簡述預約服務或點擊下方標籤快速填寫" required></textarea>
-        <!-- 快選標籤區 -->
         <div class="tags-container" id="quickTagsContainer"></div>
       </div>
 
@@ -457,9 +528,8 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
     const STAFF_CACHE_KEY = 'booking_system_staff_cache';
-    const CLINIC_SCHEDULE_CACHE_KEY = 'booking_system_clinic_schedule_cache'; // 門診表快取鍵
+    const CLINIC_SCHEDULE_CACHE_KEY = 'booking_system_clinic_schedule_cache';
 
-    // 常用預約項目標籤清單
     const QUICK_TAGS = [
       '塑型回診',
       'MiSight回診',
@@ -471,8 +541,10 @@
       '諮詢'
     ];
 
-    // 全域變數：儲存門診表二維陣列資料
     let clinicScheduleData = null;
+
+    // 改期狀態追蹤物件
+    let editingBooking = null; 
 
     // ==========================================
     // 1. 初始化日期設定
@@ -488,7 +560,7 @@
     }
 
     // ==========================================
-    // 2. 渲染並綁定快選標籤事件
+    // 2. 快選標籤
     // ==========================================
     function initQuickTags() {
       const container = document.getElementById('quickTagsContainer');
@@ -518,7 +590,7 @@
     }
 
     // ==========================================
-    // 3. 渲染負責人員下拉選單
+    // 3. 人員選單與快取
     // ==========================================
     function renderStaffOptions(staffList, selectedValue = '') {
       const staffSelect = document.getElementById('staff');
@@ -536,9 +608,6 @@
       staffSelect.disabled = false;
     }
 
-    // ==========================================
-    // 4. 快取策略載入人員名單（Stale-While-Revalidate）
-    // ==========================================
     async function loadStaffList() {
       const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
       let cachedList = [];
@@ -550,7 +619,7 @@
             renderStaffOptions(cachedList);
           }
         } catch (e) {
-          console.warn('快取解析失敗，重新連線獲取', e);
+          console.warn('快取解析失敗', e);
         }
       }
 
@@ -565,23 +634,19 @@
           }
         }
       } catch (err) {
-        console.warn('背景同步人員名單失敗，繼續使用快取內容', err);
-        if (cachedList.length === 0) {
-          const staffSelect = document.getElementById('staff');
-          staffSelect.innerHTML = '<option value="" disabled selected>人員載入失敗，請重新整理</option>';
-        }
+        console.warn('載入人員失敗，使用既有快取', err);
       }
     }
 
     // ==========================================
-    // 5. 門診表載入與快取策略（方案 A：Stale-While-Revalidate）
+    // 4. 門診表載入
     // ==========================================
     async function loadClinicSchedule() {
       const cachedData = localStorage.getItem(CLINIC_SCHEDULE_CACHE_KEY);
       if (cachedData) {
         try {
           clinicScheduleData = JSON.parse(cachedData);
-          checkClinicDoctorRequirement(); // 快取載入後立即執行一次檢查
+          checkClinicDoctorRequirement();
         } catch (e) {
           console.warn('門診表快取解析失敗', e);
         }
@@ -593,19 +658,13 @@
         if (res.status === 'success' && Array.isArray(res.schedule)) {
           clinicScheduleData = res.schedule;
           localStorage.setItem(CLINIC_SCHEDULE_CACHE_KEY, JSON.stringify(res.schedule));
-          checkClinicDoctorRequirement(); // 最新資料更新後再次確認
+          checkClinicDoctorRequirement();
         }
       } catch (err) {
-        console.warn('載入門診表失敗，繼續使用現有狀態', err);
+        console.warn('門診表載入失敗', err);
       }
     }
 
-    // ==========================================
-    // 6. 即時監聽與判定是否需輸入指定醫師
-    // ==========================================
-    /**
-     * 依時間字串判斷所屬診別
-     */
     function getClinicSessionName(timeStr) {
       if (!timeStr) return '';
       if (timeStr >= '09:00' && timeStr <= '12:00') return '早診';
@@ -614,12 +673,6 @@
       return '';
     }
 
-    /**
-     * 核心邏輯：即時檢查日期與時間對照門診表的數值
-     * - 週日不執行判斷（getDay() === 0）
-     * - 若門診表數值不是 '1'（NOT 邏輯），展開指定醫師輸入框並設為必填
-     * - 若為 '1'，收合並清空輸入框
-     */
     function checkClinicDoctorRequirement() {
       const dateInput = document.getElementById('date');
       const timeInput = document.getElementById('time');
@@ -629,19 +682,16 @@
       const dateVal = dateInput.value;
       const timeVal = timeInput.value;
 
-      // 若尚未選擇完整日期或時間，或是門診表尚未載入完成，隱藏輸入框
       if (!dateVal || !timeVal || !clinicScheduleData) {
         doctorGroup.style.display = 'none';
         doctorInput.required = false;
         return;
       }
 
-      // 取得星期幾（避免時區偏差，採用分割字串精確建構 Date 物件）
       const [year, month, day] = dateVal.split('-').map(Number);
       const targetDate = new Date(year, month - 1, day);
-      const dayOfWeek = targetDate.getDay(); // 0 為週日, 1 為週一, ..., 6 為週六
+      const dayOfWeek = targetDate.getDay();
 
-      // 規則：週日不需要執行此判斷
       if (dayOfWeek === 0) {
         doctorGroup.style.display = 'none';
         doctorInput.required = false;
@@ -649,7 +699,6 @@
         return;
       }
 
-      // 取得當前診別
       const session = getClinicSessionName(timeVal);
       if (!session) {
         doctorGroup.style.display = 'none';
@@ -657,13 +706,10 @@
         return;
       }
 
-      // 比對門診表工作表結構
-      // 假設第一列為表頭（包含週一到週六），列首欄為診別名稱（早診、午診、晚診）
       const headers = clinicScheduleData[0];
       const weekDayNames = ['', '週一', '週二', '週三', '週四', '週五', '週六'];
       const targetWeekDayName = weekDayNames[dayOfWeek];
 
-      // 尋找對應的星期欄位索引
       let targetColIndex = -1;
       for (let c = 0; c < headers.length; c++) {
         const headerStr = String(headers[c] || '').trim();
@@ -673,7 +719,6 @@
         }
       }
 
-      // 尋找對應的診別列索引
       let targetRowIndex = -1;
       for (let r = 1; r < clinicScheduleData.length; r++) {
         const sessionName = String(clinicScheduleData[r][0] || '').trim();
@@ -683,11 +728,8 @@
         }
       }
 
-      // 若成功定位到門診表格位
       if (targetRowIndex !== -1 && targetColIndex !== -1) {
         const cellValue = String(clinicScheduleData[targetRowIndex][targetColIndex] || '').trim();
-
-        // NOT 邏輯：只要內容不是 1，即觸發展開並要求輸入醫師
         if (cellValue !== '1') {
           doctorGroup.style.display = 'block';
           doctorInput.required = true;
@@ -695,20 +737,18 @@
         }
       }
 
-      // 條件不成立（為 1 或查無特定限制），隱藏並清除
       doctorGroup.style.display = 'none';
       doctorInput.required = false;
       doctorInput.value = '';
     }
 
-    // 監聽日期與時間變更事件
     document.getElementById('date').addEventListener('change', checkClinicDoctorRequirement);
     document.getElementById('date').addEventListener('input', checkClinicDoctorRequirement);
     document.getElementById('time').addEventListener('change', checkClinicDoctorRequirement);
     document.getElementById('time').addEventListener('input', checkClinicDoctorRequirement);
 
     // ==========================================
-    // 7. 當日預約查詢功能
+    // 5. 當日預約查詢、改期與取消
     // ==========================================
     const queryScheduleBtn = document.getElementById('queryScheduleBtn');
     const scheduleDrawer = document.getElementById('scheduleDrawer');
@@ -719,6 +759,9 @@
     closeDrawerBtn.addEventListener('click', () => {
       scheduleDrawer.style.display = 'none';
     });
+
+    // 暫存當前抽屜載入的行程物件對照
+    let loadedAppointmentsMap = {};
 
     async function queryAppointments(selectedDate) {
       if (!selectedDate) {
@@ -740,16 +783,27 @@
 
         if (res.status === 'success') {
           const list = res.appointments || [];
+          loadedAppointmentsMap = {};
+
           if (list.length === 0) {
             scheduleListContainer.innerHTML = '<li class="schedule-empty">💡 當日營業時段尚無任何預約</li>';
           } else {
-            scheduleListContainer.innerHTML = list.map(item => `
-              <li class="schedule-item">
-                <span class="schedule-item-time">${item.start} - ${item.end}</span>
-                <span class="schedule-item-name">${item.name}</span>
-                <span class="schedule-item-staff">${item.staff}</span>
-              </li>
-            `).join('');
+            scheduleListContainer.innerHTML = list.map((item, idx) => {
+              loadedAppointmentsMap[item.id] = item;
+              return `
+                <li class="schedule-item">
+                  <div class="schedule-item-info">
+                    <span class="schedule-item-time">${item.start}</span>
+                    <span class="schedule-item-name" title="${item.name}">${item.name}</span>
+                    <span class="schedule-item-staff">${item.staff}</span>
+                  </div>
+                  <div class="schedule-actions">
+                    <button type="button" class="item-btn btn-edit" onclick="triggerEdit('${item.id}')">✏️ 改期</button>
+                    <button type="button" class="item-btn btn-delete" onclick="triggerCancel('${item.id}')">🗑️ 取消</button>
+                  </div>
+                </li>
+              `;
+            }).join('');
           }
         } else {
           throw new Error(res.message);
@@ -767,8 +821,132 @@
       queryAppointments(selectedDate);
     });
 
+    // 觸發改期：將預約資料回填主表單
+    window.triggerEdit = function(eventId) {
+      const item = loadedAppointmentsMap[eventId];
+      if (!item) return;
+
+      editingBooking = {
+        eventId: item.id,
+        originalDate: item.date,
+        originalTime: item.time,
+        registerStatus: item.registerStatus || '是'
+      };
+
+      // 填入既有內容
+      document.getElementById('name').value = item.name;
+      document.getElementById('time').value = item.time;
+      document.getElementById('content').value = item.content || '';
+      document.getElementById('staff').value = item.staff;
+
+      // 解析民國生日（格式可能是：75年08月16日 或 1986-08-16）
+      if (item.birthday) {
+        const rocMatch = item.birthday.match(/(\d+)年(\d+)月(\d+)日/);
+        if (rocMatch) {
+          document.getElementById('rocYear').value = parseInt(rocMatch[1], 10);
+          document.getElementById('rocMonth').value = parseInt(rocMatch[2], 10);
+          document.getElementById('rocDay').value = parseInt(rocMatch[3], 10);
+        } else {
+          const parts = item.birthday.split('-');
+          if (parts.length === 3) {
+            document.getElementById('rocYear').value = parseInt(parts[0], 10) - 1911;
+            document.getElementById('rocMonth').value = parseInt(parts[1], 10);
+            document.getElementById('rocDay').value = parseInt(parts[2], 10);
+          }
+        }
+      }
+
+      // 維持原掛號狀態
+      isRegistering = (item.registerStatus !== '否');
+      updateRegisterUI();
+
+      // 切換為改期模式 UI
+      document.getElementById('editModeBanner').classList.add('active');
+      document.getElementById('editModeText').innerText = `⚠️ 正在改期：【${item.name}】原預約 (${item.date} ${item.time})`;
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.classList.add('reschedule-mode');
+      submitBtn.innerText = '確認儲存改期';
+
+      // 檢查雙診醫師
+      checkClinicDoctorRequirement();
+
+      // 關閉抽屜並滾動到頂部
+      scheduleDrawer.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 放棄改期
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+      resetToCreateMode();
+    });
+
+    function resetToCreateMode() {
+      editingBooking = null;
+      document.getElementById('editModeBanner').classList.remove('active');
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.classList.remove('reschedule-mode');
+      submitBtn.innerText = '確認送出預約';
+      document.getElementById('bookingForm').reset();
+      initDateConstraints();
+      isRegistering = true;
+      updateRegisterUI();
+      checkClinicDoctorRequirement();
+      const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
+      if (cachedData) renderStaffOptions(JSON.parse(cachedData));
+    }
+
+    // 觸發取消：直接呼叫後端進行日曆刪除與試算表追加
+    window.triggerCancel = async function(eventId) {
+      const item = loadedAppointmentsMap[eventId];
+      if (!item) return;
+
+      const confirmMsg = `確定要取消【${item.name}】於 ${item.date} ${item.time} 的預約嗎？\n\n日曆時段將立即刪除釋出，並通知櫃檯辦理！`;
+      if (!confirm(confirmMsg)) return;
+
+      const statusMsg = document.getElementById('statusMsg');
+      statusMsg.className = 'status-msg';
+      statusMsg.innerText = '正在處理取消預約...';
+
+      const payload = {
+        action: 'cancel',
+        eventId: item.id,
+        originalDate: item.date,
+        originalTime: item.time,
+        name: item.name,
+        birthday: item.birthday,
+        staff: item.staff,
+        registerStatus: item.registerStatus || '是'
+      };
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+          redirect: 'follow'
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          statusMsg.className = 'status-msg success';
+          statusMsg.innerText = '✅ ' + result.message;
+          // 若目前正在編輯該筆，自動重設
+          if (editingBooking && editingBooking.eventId === eventId) {
+            resetToCreateMode();
+          }
+          // 重新整理當日行程清單
+          queryAppointments(item.date);
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (err) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.innerText = '❌ 取消失敗：' + (err.message || '連線異常');
+      }
+    };
+
     // ==========================================
-    // 8. 掛號狀態切換邏輯
+    // 6. 掛號切換與生日檢核
     // ==========================================
     let isRegistering = true;
     const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
@@ -789,9 +967,6 @@
       updateRegisterUI();
     });
 
-    // ==========================================
-    // 9. 民國生日真實性檢查
-    // ==========================================
     function validateAndFormatRocDate(rocYear, rocMonth, rocDay) {
       if (isNaN(rocYear) || isNaN(rocMonth) || isNaN(rocDay)) {
         return { valid: false, message: '請完整填寫客戶生日之民國年、月、日' };
@@ -823,7 +998,7 @@
     }
 
     // ==========================================
-    // 10. 表單送出處理
+    // 7. 表單送出處理（支援新增與改期）
     // ==========================================
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -842,15 +1017,16 @@
         return;
       }
 
+      const isReschedule = (editingBooking !== null);
       submitBtn.disabled = true;
-      submitBtn.innerText = '資料傳送中...';
+      submitBtn.innerText = isReschedule ? '改期資料儲存中...' : '資料傳送中...';
       statusMsg.className = 'status-msg';
       statusMsg.innerText = '';
 
       const submittedDate = document.getElementById('date').value;
       
-      // 封裝表單資料，包含指定醫師 doctor
       const payload = {
+        action: isReschedule ? 'reschedule' : 'create',
         date: submittedDate,
         time: document.getElementById('time').value,
         name: document.getElementById('name').value.trim(),
@@ -861,15 +1037,21 @@
         doctor: document.getElementById('doctor').value.trim()
       };
 
+      if (isReschedule) {
+        payload.eventId = editingBooking.eventId;
+        payload.originalDate = editingBooking.originalDate;
+        payload.originalTime = editingBooking.originalTime;
+        // 維持原掛號狀態
+        payload.registerStatus = editingBooking.registerStatus;
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload),
           signal: controller.signal,
           redirect: 'follow'
@@ -881,17 +1063,10 @@
         if (result.status === 'success') {
           statusMsg.className = 'status-msg success';
           statusMsg.innerText = '✅ ' + result.message;
-          document.getElementById('bookingForm').reset();
           
-          initDateConstraints();
-          isRegistering = true;
-          updateRegisterUI();
-          checkClinicDoctorRequirement(); // 重設醫師欄位狀態
-          
-          const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
-          if (cachedData) renderStaffOptions(JSON.parse(cachedData));
+          resetToCreateMode();
 
-          // 若目前清單處於展開狀態，自動同步最新預約
+          // 若清單處於展開狀態，更新該日期清單
           if (scheduleDrawer.style.display === 'block') {
             queryAppointments(submittedDate);
           }
@@ -906,21 +1081,18 @@
         } else {
           statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
         }
-        console.error('API Error:', error);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerText = '確認送出預約';
+        submitBtn.innerText = editingBooking ? '確認儲存改期' : '確認送出預約';
       }
     });
 
-    // ==========================================
-    // 頁面載入初始化
-    // ==========================================
+    // 頁面初始化
     window.addEventListener('DOMContentLoaded', () => {
       initDateConstraints();
       initQuickTags();
       loadStaffList();
-      loadClinicSchedule(); // 載入門診表快取與背景同步
+      loadClinicSchedule();
     });
   </script>
 
