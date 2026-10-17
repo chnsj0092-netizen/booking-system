@@ -1077,7 +1077,7 @@
         clearTimeout(timeoutId);
         statusMsg.className = 'status-msg error';
         if (error.name === 'AbortError') {
-          statusMsg.innerText = '❌ 連線逾時，請檢查網路狀況後再試一次。';
+          statusMsg.innerText = '❌ 連線逾時，請檢查預約表及日曆是否預約成功。';
         } else {
           statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
         }
