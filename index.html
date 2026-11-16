@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>線上預約登記系統</title>
   <style>
-    /* 基礎樣式與全域 CSS 變數定義 */
+    /* ==========================================
+       基礎樣式與 CSS 變數定義
+       ========================================== */
     :root { 
       --primary-color: #2563eb; 
       --warning-color: #ea580c;
@@ -31,10 +33,10 @@
       text-align: center; 
       color: #1e293b; 
       margin-top: 0; 
-      margin-bottom: 20px;
+      margin-bottom: 20px; 
     }
 
-    /* 改期模式提示橫幅樣式 */
+    /* 改期模式提示條 */
     .edit-mode-banner {
       display: none;
       background-color: #fff7ed;
@@ -65,7 +67,6 @@
       background: #c2410c;
     }
 
-    /* 表單欄位基礎樣式 */
     .form-group { 
       margin-bottom: 16px; 
     }
@@ -89,6 +90,65 @@
       outline: none; 
       border-color: var(--primary-color); 
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
+    }
+
+    /* 姓名輸入與智慧下拉選單容器 */
+    .autocomplete-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .autocomplete-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+      padding: 4px 0;
+      margin: 0;
+      list-style: none;
+    }
+    .autocomplete-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.15s ease;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+    .autocomplete-item:hover {
+      background-color: #f8fafc;
+    }
+    .autocomplete-item-main {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .autocomplete-item-sub {
+      font-size: 12px;
+      color: #64748b;
+      margin-left: 6px;
+      font-weight: 500;
+    }
+    .autocomplete-item-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: 8px;
     }
 
     /* 日期輸入與查詢按鈕並排容器 */
@@ -238,22 +298,18 @@
       transition: background 0.15s ease;
       white-space: nowrap;
     }
-    .item-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
     .btn-edit {
       background: #fef3c7;
       color: #b45309;
     }
-    .btn-edit:hover:not(:disabled) {
+    .btn-edit:hover {
       background: #fde68a;
     }
     .btn-delete {
       background: #fee2e2;
       color: #b91c1c;
     }
-    .btn-delete:hover:not(:disabled) {
+    .btn-delete:hover {
       background: #fecaca;
     }
     .schedule-empty {
@@ -328,7 +384,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* 動態指定醫師區塊 */
+    /* 動態指定醫師 */
     .doctor-dynamic-group {
       display: none;
       animation: fadeIn 0.25s ease;
@@ -347,7 +403,7 @@
       margin-top: 4px;
     }
 
-    /* 民國年月日輸入框容器 */
+    /* 民國年月日 */
     .roc-date-container {
       display: flex;
       gap: 8px;
@@ -369,7 +425,7 @@
       white-space: nowrap;
     }
 
-    /* 快選標籤容器 */
+    /* 快選標籤 */
     .tags-container {
       display: flex;
       flex-wrap: wrap;
@@ -394,7 +450,7 @@
       border-color: #cbd5e1;
     }
 
-    /* 表單送出按鈕與狀態訊息 */
+    /* 送出按鈕 */
     .submit-btn { 
       width: 100%; 
       padding: 12px; 
@@ -438,14 +494,14 @@
 
     <!-- 改期狀態提示橫幅 -->
     <div id="editModeBanner" class="edit-mode-banner">
-      <span id="editModeText">⚠️ 正在改期</span>
+      <span id="editModeText">⚠️ 正在改期：王小明 原預約 (10/14)</span>
       <button type="button" id="cancelEditBtn" class="cancel-edit-btn">放棄改期</button>
     </div>
 
     <form id="bookingForm">
       <!-- 預約日期 + 查詢按鈕 -->
       <div class="form-group">
-        <label for="date">預約日期</label>
+        <label>預約日期</label>
         <div class="date-action-container">
           <div class="date-input-wrap">
             <input type="date" id="date" required>
@@ -467,10 +523,10 @@
 
       <!-- 預約時間 + 是否掛號按鈕 -->
       <div class="form-group">
-        <label for="time">預約時間與掛號選項 (營業時段 09:00~21:00)</label>
+        <label>預約時間與掛號選項</label>
         <div class="time-register-container">
           <div class="time-input-wrap">
-            <input type="time" id="time" min="09:00" max="21:00" required>
+            <input type="time" id="time" required>
           </div>
           <button type="button" id="toggleRegisterBtn" class="toggle-register-btn state-register" title="點擊切換是否掛號">
             <span class="status-indicator"></span>
@@ -486,9 +542,13 @@
         <div class="doctor-dynamic-hint">⚠️ 雙診! 請輸入要預約的醫生。</div>
       </div>
 
+      <!-- 客戶姓名 + 智慧歷史搜尋下拉選單 -->
       <div class="form-group">
-        <label for="name">客戶姓名</label>
-        <input type="text" id="name" placeholder="請輸入全名" required>
+        <label>客戶姓名 (輸入即搜尋歷史資料)</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="name" placeholder="請輸入全名" autocomplete="off" required>
+          <ul class="autocomplete-dropdown" id="nameDropdown"></ul>
+        </div>
       </div>
 
       <!-- 客戶生日：民國年月日輸入 -->
@@ -512,7 +572,7 @@
 
       <!-- 負責人員 -->
       <div class="form-group">
-        <label for="staff">負責人員</label>
+        <label>負責人員</label>
         <select id="staff" required>
           <option value="" disabled selected>載入人員名單中...</option>
         </select>
@@ -520,7 +580,7 @@
 
       <!-- 預約內容與快選標籤 -->
       <div class="form-group">
-        <label for="content">預約內容</label>
+        <label>預約內容</label>
         <textarea id="content" rows="3" placeholder="請簡述預約服務或點擊下方標籤快速填寫" required></textarea>
         <div class="tags-container" id="quickTagsContainer"></div>
       </div>
@@ -532,38 +592,18 @@
 
   <script>
     /**
-     * @constant {string} API_URL - Google Apps Script 後端部署之 Web App 網址
+     * ==========================================
+     * 全域常數與系統狀態變數定義
+     * ==========================================
      */
+    // 後端 GAS Web App 部署網址
     const API_URL = 'https://script.google.com/macros/s/AKfycbyeltCcF5yjWVWx-UmjVZNKRyuwRqdLHg4Y6sKPqULS2vEyoHPRm6j6ffdoPcgD0O7f/exec';
-
-    /**
-     * @constant {string} STAFF_CACHE_KEY - 本地端 localStorage 儲存負責人員名單之鍵值名稱
-     */
+    // 負責人員名單 localStorage 快取鍵值
     const STAFF_CACHE_KEY = 'booking_system_staff_cache';
-
-    /**
-     * @constant {string} CLINIC_SCHEDULE_CACHE_KEY - 本地端 localStorage 儲存門診表之鍵值名稱
-     */
+    // 門診表排班矩陣 localStorage 快取鍵值
     const CLINIC_SCHEDULE_CACHE_KEY = 'booking_system_clinic_schedule_cache';
 
-    /**
-     * @constant {string} MIN_BOOKING_TIME - 允許預約之最早營業開始時間 (HH:mm)
-     */
-    const MIN_BOOKING_TIME = '09:00';
-
-    /**
-     * @constant {string} MAX_BOOKING_TIME - 允許預約之最晚營業結束時間 (HH:mm)
-     */
-    const MAX_BOOKING_TIME = '21:00';
-
-    /**
-     * @constant {number} DEFAULT_FETCH_TIMEOUT_MS - 網路請求預設逾時毫秒數 (15秒)
-     */
-    const DEFAULT_FETCH_TIMEOUT_MS = 15000;
-
-    /**
-     * @constant {Array<string>} QUICK_TAGS - 預約內容快選標籤字串陣列
-     */
+    // 視光常用服務快選標籤陣列
     const QUICK_TAGS = [
       '塑型回診',
       'MiSight回診',
@@ -575,113 +615,28 @@
       '諮詢'
     ];
 
-    /**
-     * @type {Array<Array<string>>|null} clinicScheduleData - 門診表二維陣列快取資料
-     */
+    // 儲存門診表二維陣列資料
     let clinicScheduleData = null;
+    // 儲存當前正在改期的預約物件（若為 null 代表一般新增模式）
+    let editingBooking = null; 
 
     /**
-     * @type {Object|null} editingBooking - 追蹤當前正在改期的預約物件（null 代表一般新增模式）
+     * 將字串中的 HTML 特殊字元進行跳脫，防止 XSS 攻擊與 DOM 破版
+     * @param {string} rawStr 原始輸入字串
+     * @returns {string} 跳脫後的安全字串
      */
-    let editingBooking = null;
-
-    /**
-     * @type {Object<string, Object>} loadedAppointmentsMap - 暫存當日查詢出之預約行程雜湊表（以 eventId 為鍵值）
-     */
-    let loadedAppointmentsMap = {};
-
-    /**
-     * @type {boolean} isRegistering - 追蹤當前表單是否處於「要掛號」狀態
-     */
-    let isRegistering = true;
-
-    /**
-     * @type {boolean} isProcessingAction - 防止清單操作（如取消預約）重複點擊之狀態鎖
-     */
-    let isProcessingAction = false;
-
-    /**
-     * @type {HTMLElement} queryScheduleBtn - 查詢預約按鈕 DOM 元素
-     */
-    const queryScheduleBtn = document.getElementById('queryScheduleBtn');
-
-    /**
-     * @type {HTMLElement} scheduleDrawer - 當日預約清單抽屜容器 DOM 元素
-     */
-    const scheduleDrawer = document.getElementById('scheduleDrawer');
-
-    /**
-     * @type {HTMLElement} scheduleDrawerTitle - 預約清單抽屜標題 DOM 元素
-     */
-    const scheduleDrawerTitle = document.getElementById('scheduleDrawerTitle');
-
-    /**
-     * @type {HTMLElement} scheduleListContainer - 預約清單項目列表 (ul) DOM 元素
-     */
-    const scheduleListContainer = document.getElementById('scheduleListContainer');
-
-    /**
-     * @type {HTMLElement} closeDrawerBtn - 收合預約清單抽屜按鈕 DOM 元素
-     */
-    const closeDrawerBtn = document.getElementById('closeDrawerBtn');
-
-    /**
-     * @type {HTMLElement} toggleRegisterBtn - 切換是否掛號之按鈕 DOM 元素
-     */
-    const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
-
-    /**
-     * @type {HTMLElement} toggleRegisterText - 顯示是否掛號狀態文字之 DOM 元素
-     */
-    const toggleRegisterText = document.getElementById('toggleRegisterText');
-
-    // ==========================================
-    // 共用工具函式
-    // ==========================================
-
-    /**
-     * 將輸入字串進行 HTML 特殊字元跳脫，防止 XSS 攻擊與版面破版
-     * @param {string} unsafeStr - 尚未跳脫之原始字串
-     * @returns {string} 完成安全跳脫之字串
-     */
-    function escapeHtml(unsafeStr) {
-      const str = String(unsafeStr ?? '');
-      return str
+    function escapeHtml(rawStr) {
+      if (rawStr === null || rawStr === undefined) return '';
+      return String(rawStr)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/'/g, '&#39;');
     }
 
     /**
-     * 封裝具備逾時自動中斷機制 (AbortController) 的非同步 fetch 請求函式
-     * @param {string} url - 請求目標網址
-     * @param {Object} [options={}] - fetch 設定選項物件
-     * @param {number} [timeoutMs=DEFAULT_FETCH_TIMEOUT_MS] - 逾時毫秒數
-     * @returns {Promise<Response>} 回傳 fetch Response 物件之 Promise
-     */
-    async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const response = await fetch(url, {
-          ...options,
-          signal: controller.signal
-        });
-        return response;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    }
-
-    // ==========================================
-    // 1. 初始化日期與時間範圍設定
-    // ==========================================
-
-    /**
-     * 初始化預約日期欄位的最小可選日期為今日，若未填寫則預設帶入今日日期
-     * @returns {void}
+     * 1. 初始化日期選擇器限制（最小日期設為今日）
      */
     function initDateConstraints() {
       const dateInput = document.getElementById('date');
@@ -694,22 +649,7 @@
     }
 
     /**
-     * 檢核預約時間是否落在營業時段範圍內 (09:00 ~ 21:00)
-     * @param {string} timeStr - 時間字串 (格式 HH:mm)
-     * @returns {boolean} 是否為有效之營業時段
-     */
-    function isValidBookingTime(timeStr) {
-      if (!timeStr) return false;
-      return timeStr >= MIN_BOOKING_TIME && timeStr <= MAX_BOOKING_TIME;
-    }
-
-    // ==========================================
-    // 2. 快選標籤初始化
-    // ==========================================
-
-    /**
-     * 建立預約內容下方的快選標籤按鈕並綁定點擊附加文字事件
-     * @returns {void}
+     * 2. 初始化預約內容快選標籤按鈕與點擊代入事件
      */
     function initQuickTags() {
       const container = document.getElementById('quickTagsContainer');
@@ -738,15 +678,10 @@
       });
     }
 
-    // ==========================================
-    // 3. 人員選單與門診表快取及合併載入
-    // ==========================================
-
     /**
-     * 將負責人員名單渲染至下拉選單中
-     * @param {Array<string>} staffList - 負責人員姓名字串陣列
-     * @param {string} [selectedValue=''] - 預設選取之人員姓名
-     * @returns {void}
+     * 3. 渲染負責人員下拉選單選項
+     * @param {Array<string>} staffList 人員姓名陣列
+     * @param {string} selectedValue 預選的人員姓名
      */
     function renderStaffOptions(staffList, selectedValue = '') {
       const staffSelect = document.getElementById('staff');
@@ -766,27 +701,46 @@
     }
 
     /**
-     * 先從 localStorage 載入快取之人員名單與門診表，再向後端發送請求同步最新資料
-     * @returns {Promise<void>}
+     * 非同步載入負責人員名單（實作 Stale-While-Revalidate 快取策略）
      */
-    async function loadInitData() {
-      const cachedStaffStr = localStorage.getItem(STAFF_CACHE_KEY);
-      let cachedStaffList = [];
-      if (cachedStaffStr) {
+    async function loadStaffList() {
+      const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
+      let cachedList = [];
+
+      if (cachedData) {
         try {
-          cachedStaffList = JSON.parse(cachedStaffStr);
-          if (Array.isArray(cachedStaffList) && cachedStaffList.length > 0) {
-            renderStaffOptions(cachedStaffList);
+          cachedList = JSON.parse(cachedData);
+          if (Array.isArray(cachedList) && cachedList.length > 0) {
+            renderStaffOptions(cachedList);
           }
         } catch (e) {
-          console.warn('人員快取解析失敗', e);
+          console.warn('快取解析失敗', e);
         }
       }
 
-      const cachedScheduleStr = localStorage.getItem(CLINIC_SCHEDULE_CACHE_KEY);
-      if (cachedScheduleStr) {
+      try {
+        const response = await fetch(`${API_URL}?action=getStaff`, { credentials: 'omit' });
+        const res = await response.json();
+        if (res.status === 'success' && Array.isArray(res.staffList)) {
+          const currentVal = document.getElementById('staff').value;
+          if (JSON.stringify(res.staffList) !== JSON.stringify(cachedList)) {
+            localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(res.staffList));
+            renderStaffOptions(res.staffList, currentVal);
+          }
+        }
+      } catch (err) {
+        console.warn('載入人員失敗，使用既有快取', err);
+      }
+    }
+
+    /**
+     * 4. 非同步載入門診表排班矩陣並檢核雙診狀態
+     */
+    async function loadClinicSchedule() {
+      const cachedData = localStorage.getItem(CLINIC_SCHEDULE_CACHE_KEY);
+      if (cachedData) {
         try {
-          clinicScheduleData = JSON.parse(cachedScheduleStr);
+          clinicScheduleData = JSON.parse(cachedData);
           checkClinicDoctorRequirement();
         } catch (e) {
           console.warn('門診表快取解析失敗', e);
@@ -794,36 +748,22 @@
       }
 
       try {
-        const response = await fetchWithTimeout(`${API_URL}?action=getInitData`, { credentials: 'omit' });
+        const response = await fetch(`${API_URL}?action=getClinicSchedule`, { credentials: 'omit' });
         const res = await response.json();
-
-        if (res.status === 'success') {
-          if (Array.isArray(res.staffList)) {
-            const currentVal = document.getElementById('staff').value;
-            if (JSON.stringify(res.staffList) !== JSON.stringify(cachedStaffList)) {
-              localStorage.setItem(STAFF_CACHE_KEY, JSON.stringify(res.staffList));
-              renderStaffOptions(res.staffList, currentVal);
-            }
-          }
-          if (Array.isArray(res.schedule)) {
-            clinicScheduleData = res.schedule;
-            localStorage.setItem(CLINIC_SCHEDULE_CACHE_KEY, JSON.stringify(res.schedule));
-            checkClinicDoctorRequirement();
-          }
+        if (res.status === 'success' && Array.isArray(res.schedule)) {
+          clinicScheduleData = res.schedule;
+          localStorage.setItem(CLINIC_SCHEDULE_CACHE_KEY, JSON.stringify(res.schedule));
+          checkClinicDoctorRequirement();
         }
       } catch (err) {
-        console.warn('合併載入初始資料失敗，維持既有快取運作', err);
+        console.warn('門診表載入失敗', err);
       }
     }
 
-    // ==========================================
-    // 4. 門診表雙診判斷邏輯
-    // ==========================================
-
     /**
-     * 根據時間字串對應門診時段名稱（早診、午診、晚診）
-     * @param {string} timeStr - 24小時制時間字串 (HH:mm)
-     * @returns {string} 對應之診別名稱，若非營業時段則回傳空字串
+     * 依時間字串判斷對應之門診診別名稱
+     * @param {string} timeStr HH:mm 格式時間字串
+     * @returns {string} 診別名稱（早診/午診/晚診/空字串）
      */
     function getClinicSessionName(timeStr) {
       if (!timeStr) return '';
@@ -834,9 +774,7 @@
     }
 
     /**
-     * 檢查當前選擇之日期、時間與掛號狀態是否需填寫「指定掛號醫師」
-     * 若選擇「不掛號」或該時段為單診，自動隱藏並解除必填限制
-     * @returns {void}
+     * 檢查所選日期與時段是否為雙診（儲存格數值 != 1），動態顯示或隱藏指定醫師欄位
      */
     function checkClinicDoctorRequirement() {
       const dateInput = document.getElementById('date');
@@ -847,12 +785,10 @@
       const dateVal = dateInput.value;
       const timeVal = timeInput.value;
 
-      if (!isRegistering || !dateVal || !timeVal || !clinicScheduleData) {
+      if (!dateVal || !timeVal || !clinicScheduleData) {
         doctorGroup.style.display = 'none';
         doctorInput.required = false;
-        if (!isRegistering) {
-          doctorInput.value = '';
-        }
+        doctorInput.value = '';
         return;
       }
 
@@ -875,7 +811,7 @@
         return;
       }
 
-      const headers = clinicScheduleData[0] || [];
+      const headers = clinicScheduleData[0];
       const weekDayNames = ['', '週一', '週二', '週三', '週四', '週五', '週六'];
       const targetWeekDayName = weekDayNames[dayOfWeek];
 
@@ -916,18 +852,25 @@
     document.getElementById('time').addEventListener('change', checkClinicDoctorRequirement);
     document.getElementById('time').addEventListener('input', checkClinicDoctorRequirement);
 
-    // ==========================================
-    // 5. 當日預約查詢、改期與取消處理
-    // ==========================================
+    /**
+     * 5. 當日預約查詢、改期與取消控制
+     */
+    const queryScheduleBtn = document.getElementById('queryScheduleBtn');
+    const scheduleDrawer = document.getElementById('scheduleDrawer');
+    const scheduleDrawerTitle = document.getElementById('scheduleDrawerTitle');
+    const scheduleListContainer = document.getElementById('scheduleListContainer');
+    const closeDrawerBtn = document.getElementById('closeDrawerBtn');
 
     closeDrawerBtn.addEventListener('click', () => {
       scheduleDrawer.style.display = 'none';
     });
 
+    // 以事件 ID 為 Key 儲存當日查詢到的預約物件映射表
+    let loadedAppointmentsMap = {};
+
     /**
-     * 查詢指定日期之日曆預約行程並渲染於展開抽屜中
-     * @param {string} selectedDate - 欲查詢之日期字串 (YYYY-MM-DD)
-     * @returns {Promise<void>}
+     * 查詢指定日期的日曆預約清單並渲染抽屜列表
+     * @param {string} selectedDate YYYY-MM-DD 格式日期字串
      */
     async function queryAppointments(selectedDate) {
       if (!selectedDate) {
@@ -942,10 +885,9 @@
       scheduleListContainer.innerHTML = '<li class="schedule-empty">⏳ 正在連線讀取日曆行程...</li>';
 
       try {
-        const response = await fetchWithTimeout(
-          `${API_URL}?action=getAppointments&date=${encodeURIComponent(selectedDate)}`,
-          { credentials: 'omit' }
-        );
+        const response = await fetch(`${API_URL}?action=getAppointments&date=${encodeURIComponent(selectedDate)}`, {
+          credentials: 'omit'
+        });
         const res = await response.json();
 
         if (res.status === 'success') {
@@ -955,34 +897,49 @@
           if (list.length === 0) {
             scheduleListContainer.innerHTML = '<li class="schedule-empty">💡 當日營業時段尚無任何預約</li>';
           } else {
-            scheduleListContainer.innerHTML = list.map(item => {
+            scheduleListContainer.innerHTML = '';
+            list.forEach((item) => {
               loadedAppointmentsMap[item.id] = item;
-              const safeId = escapeHtml(item.id);
-              const safeStart = escapeHtml(item.start);
-              const safeName = escapeHtml(item.name);
-              const safeStaff = escapeHtml(item.staff);
 
-              return `
-                <li class="schedule-item">
-                  <div class="schedule-item-info">
-                    <span class="schedule-item-time">${safeStart}</span>
-                    <span class="schedule-item-name" title="${safeName}">${safeName}</span>
-                    <span class="schedule-item-staff">${safeStaff}</span>
-                  </div>
-                  <div class="schedule-actions">
-                    <button type="button" class="item-btn btn-edit" data-action="edit" data-id="${safeId}">✏️ 改期</button>
-                    <button type="button" class="item-btn btn-delete" data-action="cancel" data-id="${safeId}">🗑️ 取消</button>
-                  </div>
-                </li>
+              const li = document.createElement('li');
+              li.className = 'schedule-item';
+
+              const infoDiv = document.createElement('div');
+              infoDiv.className = 'schedule-item-info';
+              infoDiv.innerHTML = `
+                <span class="schedule-item-time">${escapeHtml(item.start)}</span>
+                <span class="schedule-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+                <span class="schedule-item-staff">${escapeHtml(item.staff)}</span>
               `;
-            }).join('');
+
+              const actionsDiv = document.createElement('div');
+              actionsDiv.className = 'schedule-actions';
+
+              const editBtn = document.createElement('button');
+              editBtn.type = 'button';
+              editBtn.className = 'item-btn btn-edit';
+              editBtn.innerText = '✏️ 改期';
+              editBtn.addEventListener('click', () => triggerEdit(item.id));
+
+              const delBtn = document.createElement('button');
+              delBtn.type = 'button';
+              delBtn.className = 'item-btn btn-delete';
+              delBtn.innerText = '🗑️ 取消';
+              delBtn.addEventListener('click', () => triggerCancel(item.id));
+
+              actionsDiv.appendChild(editBtn);
+              actionsDiv.appendChild(delBtn);
+
+              li.appendChild(infoDiv);
+              li.appendChild(actionsDiv);
+              scheduleListContainer.appendChild(li);
+            });
           }
         } else {
           throw new Error(res.message);
         }
       } catch (err) {
-        const errMsg = err.name === 'AbortError' ? '連線逾時，請稍後再試' : (err.message || '連線異常');
-        scheduleListContainer.innerHTML = `<li class="schedule-empty error">❌ 查詢失敗：${escapeHtml(errMsg)}</li>`;
+        scheduleListContainer.innerHTML = `<li class="schedule-empty error">❌ 查詢失敗：${escapeHtml(err.message || '連線逾時')}</li>`;
       } finally {
         queryScheduleBtn.disabled = false;
         queryScheduleBtn.innerText = '🔍 查詢預約';
@@ -995,27 +952,8 @@
     });
 
     /**
-     * 委派監聽預約清單抽屜內的「改期」與「取消」按鈕點擊事件
-     */
-    scheduleListContainer.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn || isProcessingAction) return;
-
-      const action = btn.getAttribute('data-action');
-      const eventId = btn.getAttribute('data-id');
-      if (!eventId) return;
-
-      if (action === 'edit') {
-        triggerEdit(eventId);
-      } else if (action === 'cancel') {
-        triggerCancel(eventId, btn);
-      }
-    });
-
-    /**
-     * 觸發改期模式：將所選預約行程資料完整回填至主表單並切換為改期 UI
-     * @param {string} eventId - Google 日曆事件唯一識別碼
-     * @returns {void}
+     * 觸發改期模式，將原預約資料帶入表單並切換改期狀態橫幅
+     * @param {string} eventId 日曆事件 ID
      */
     function triggerEdit(eventId) {
       const item = loadedAppointmentsMap[eventId];
@@ -1025,14 +963,18 @@
         eventId: item.id,
         originalDate: item.date,
         originalTime: item.time,
-        registerStatus: item.registerStatus || '是'
+        originalRegisterStatus: item.registerStatus || '是'
       };
 
-      document.getElementById('date').value = item.date;
       document.getElementById('name').value = item.name;
       document.getElementById('time').value = item.time;
       document.getElementById('content').value = item.content || '';
       document.getElementById('staff').value = item.staff;
+
+      // 先清空生日欄位，避免無生日時殘留上一筆客戶生日
+      document.getElementById('rocYear').value = '';
+      document.getElementById('rocMonth').value = '';
+      document.getElementById('rocDay').value = '';
 
       if (item.birthday) {
         const rocMatch = item.birthday.match(/(\d+)年(\d+)月(\d+)日/);
@@ -1053,18 +995,15 @@
       isRegistering = (item.registerStatus !== '否');
       updateRegisterUI();
 
-      checkClinicDoctorRequirement();
-      if (item.doctor && document.getElementById('doctorGroup').style.display !== 'none') {
-        document.getElementById('doctor').value = item.doctor;
-      }
-
       document.getElementById('editModeBanner').classList.add('active');
       document.getElementById('editModeText').innerText = `⚠️ 正在改期：【${item.name}】原預約 (${item.date} ${item.time})`;
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.classList.add('reschedule-mode');
       submitBtn.innerText = '確認儲存改期';
 
+      checkClinicDoctorRequirement();
       scheduleDrawer.style.display = 'none';
+      closeNameDropdown();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1073,8 +1012,7 @@
     });
 
     /**
-     * 退出改期模式並將表單重設回初始新增預約狀態
-     * @returns {void}
+     * 重設表單回一般新增預約模式
      */
     function resetToCreateMode() {
       editingBooking = null;
@@ -1087,33 +1025,21 @@
       isRegistering = true;
       updateRegisterUI();
       checkClinicDoctorRequirement();
+      closeNameDropdown();
       const cachedData = localStorage.getItem(STAFF_CACHE_KEY);
-      if (cachedData) {
-        try {
-          renderStaffOptions(JSON.parse(cachedData));
-        } catch (e) {
-          console.warn('重設人員選單失敗', e);
-        }
-      }
+      if (cachedData) renderStaffOptions(JSON.parse(cachedData));
     }
 
     /**
-     * 觸發取消預約：經使用者確認後呼叫後端刪除日曆事件並寫入取消紀錄
-     * @param {string} eventId - Google 日曆事件唯一識別碼
-     * @param {HTMLButtonElement} [clickedBtn] - 觸發此動作之按鈕元素（用於鎖定防連點）
-     * @returns {Promise<void>}
+     * 觸發取消預約確認與後端刪除請求
+     * @param {string} eventId 日曆事件 ID
      */
-    async function triggerCancel(eventId, clickedBtn) {
+    async function triggerCancel(eventId) {
       const item = loadedAppointmentsMap[eventId];
-      if (!item || isProcessingAction) return;
+      if (!item) return;
 
       const confirmMsg = `確定要取消【${item.name}】於 ${item.date} ${item.time} 的預約嗎？\n\n日曆時段將立即刪除釋出，並通知櫃檯辦理！`;
       if (!confirm(confirmMsg)) return;
-
-      isProcessingAction = true;
-      const allActionBtns = scheduleListContainer.querySelectorAll('.item-btn');
-      allActionBtns.forEach(b => b.disabled = true);
-      if (clickedBtn) clickedBtn.innerText = '處理中...';
 
       const statusMsg = document.getElementById('statusMsg');
       statusMsg.className = 'status-msg';
@@ -1131,7 +1057,7 @@
       };
 
       try {
-        const response = await fetchWithTimeout(API_URL, {
+        const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload),
@@ -1145,28 +1071,226 @@
           if (editingBooking && editingBooking.eventId === eventId) {
             resetToCreateMode();
           }
-          await queryAppointments(item.date);
+          queryAppointments(item.date);
         } else {
           throw new Error(result.message);
         }
       } catch (err) {
         statusMsg.className = 'status-msg error';
-        const errMsg = err.name === 'AbortError' ? '連線逾時，請重新查詢確認是否已取消' : (err.message || '連線異常');
-        statusMsg.innerText = '❌ 取消失敗：' + errMsg;
-        allActionBtns.forEach(b => b.disabled = false);
-        if (clickedBtn) clickedBtn.innerText = '🗑️ 取消';
-      } finally {
-        isProcessingAction = false;
+        statusMsg.innerText = '❌ 取消失敗：' + (err.message || '連線異常');
       }
     }
 
-    // ==========================================
-    // 6. 掛號狀態切換與民國生日檢核
-    // ==========================================
+    /**
+     * 6. 客戶姓名即時搜尋（200ms 防抖、IME 中文相容、AbortController 併發控制、一鍵代入）
+     */
+    const nameInput = document.getElementById('name');
+    const nameDropdown = document.getElementById('nameDropdown');
+    // 防抖計時器 ID
+    let nameSearchDebounceTimer = null;
+    // Fetch 請求中斷控制器
+    let nameSearchAbortController = null;
+    // 標記是否正在進行中文輸入法組字
+    let isComposing = false;
+    // 標記是否正在點選下拉選單項目代入資料（防止觸發二次搜尋）
+    let isSelectingOption = false;
+
+    nameInput.addEventListener('compositionstart', () => {
+      isComposing = true;
+    });
+
+    nameInput.addEventListener('compositionend', () => {
+      isComposing = false;
+      handleNameSearchTrigger();
+    });
+
+    nameInput.addEventListener('input', () => {
+      if (isComposing) return;
+      handleNameSearchTrigger();
+    });
+
+    // 當按下 Escape 或 Tab 切換欄位時主動關閉下拉選單，避免遮擋下方生日欄
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Tab') {
+        closeNameDropdown();
+      }
+    });
+
+    // 當姓名輸入框失去焦點時關閉下拉選單
+    nameInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        closeNameDropdown();
+      }, 150);
+    });
 
     /**
-     * 根據 isRegistering 布林狀態更新掛號切換按鈕之視覺樣式與文字
-     * @returns {void}
+     * 處理姓名輸入觸發與 200ms 防抖排程
+     */
+    function handleNameSearchTrigger() {
+      if (isSelectingOption) return;
+
+      clearTimeout(nameSearchDebounceTimer);
+      const query = nameInput.value.trim();
+
+      if (query.length < 1) {
+        if (nameSearchAbortController) {
+          nameSearchAbortController.abort();
+        }
+        closeNameDropdown();
+        return;
+      }
+
+      nameSearchDebounceTimer = setTimeout(() => {
+        executeCustomerSearch(query);
+      }, 200);
+    }
+
+    /**
+     * 發送非同步請求至 GAS 搜尋日曆歷史客戶紀錄
+     * @param {string} nameQuery 客戶姓名搜尋關鍵字
+     */
+    async function executeCustomerSearch(nameQuery) {
+      if (nameSearchAbortController) {
+        nameSearchAbortController.abort();
+      }
+      nameSearchAbortController = new AbortController();
+
+      try {
+        const response = await fetch(`${API_URL}?action=searchCustomer&name=${encodeURIComponent(nameQuery)}`, {
+          signal: nameSearchAbortController.signal,
+          credentials: 'omit'
+        });
+        const data = await response.json();
+
+        // 確認回傳時輸入框仍有字元
+        if (!nameInput.value.trim()) {
+          closeNameDropdown();
+          return;
+        }
+
+        if (data.status === 'success' && Array.isArray(data.results) && data.results.length > 0) {
+          renderCustomerDropdown(data.results);
+        } else {
+          closeNameDropdown();
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('搜尋歷史客戶失敗', err);
+          closeNameDropdown();
+        }
+      }
+    }
+
+    /**
+     * 渲染客戶姓名智慧推薦下拉選單
+     * @param {Array<Object>} list 搜尋結果陣列
+     */
+    function renderCustomerDropdown(list) {
+      nameDropdown.innerHTML = '';
+
+      list.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'autocomplete-item';
+
+        const safeName = escapeHtml(item.name);
+        const safeBday = escapeHtml(item.birthday);
+        const safeStaff = escapeHtml(item.staff);
+        const safeContent = escapeHtml(item.content ? item.content.slice(0, 8) : '歷史預約');
+
+        // 依據是否有生日呈現對應格式：
+        // 有生日：客戶姓名 (民國生日)
+        // 無生日：客戶姓名 (無生日)[負責人員]
+        let displayLabel = '';
+        if (item.hasBirthday) {
+          displayLabel = `${safeName} <span class="autocomplete-item-sub">(${safeBday})</span>`;
+        } else {
+          displayLabel = `${safeName} <span class="autocomplete-item-sub">(無生日)[${safeStaff}]</span>`;
+        }
+
+        li.innerHTML = `
+          <div>
+            <span class="autocomplete-item-main">${displayLabel}</span>
+          </div>
+          <span class="autocomplete-item-badge">${safeContent}</span>
+        `;
+
+        // 使用 mousedown 取代 click，確保在 input blur 觸發前完成資料代入
+        li.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          applyCustomerData(item);
+        });
+
+        nameDropdown.appendChild(li);
+      });
+
+      nameDropdown.style.display = 'block';
+    }
+
+    /**
+     * 關閉並清空客戶姓名下拉選單
+     */
+    function closeNameDropdown() {
+      nameDropdown.innerHTML = '';
+      nameDropdown.style.display = 'none';
+    }
+
+    /**
+     * 點選下拉選單項目後自動代入客戶姓名、民國生日、負責人員與預約項目
+     * @param {Object} item 選中之歷史客戶資料物件
+     */
+    function applyCustomerData(item) {
+      isSelectingOption = true;
+
+      // a. 代入客戶姓名
+      nameInput.value = item.name || '';
+
+      // b. 代入或清空客戶生日（防止無生日客戶殘留前一位客戶的生日）
+      if (item.hasBirthday && item.rocYear && item.rocMonth && item.rocDay) {
+        document.getElementById('rocYear').value = item.rocYear;
+        document.getElementById('rocMonth').value = item.rocMonth;
+        document.getElementById('rocDay').value = item.rocDay;
+      } else {
+        document.getElementById('rocYear').value = '';
+        document.getElementById('rocMonth').value = '';
+        document.getElementById('rocDay').value = '';
+      }
+
+      // c. 代入上次負責人員（檢核該人員是否存在於目前選單中）
+      if (item.staff) {
+        const staffSelect = document.getElementById('staff');
+        for (let i = 0; i < staffSelect.options.length; i++) {
+          if (staffSelect.options[i].value === item.staff) {
+            staffSelect.value = item.staff;
+            break;
+          }
+        }
+      }
+
+      // d. 代入上次預約項目
+      if (item.content !== undefined) {
+        document.getElementById('content').value = item.content;
+      }
+
+      closeNameDropdown();
+      setTimeout(() => { isSelectingOption = false; }, 250);
+    }
+
+    // 點擊頁面空白處時關閉下拉選單
+    document.addEventListener('click', (e) => {
+      if (!nameInput.contains(e.target) && !nameDropdown.contains(e.target)) {
+        closeNameDropdown();
+      }
+    });
+
+    /**
+     * 7. 掛號狀態切換按鈕與民國生日合法性檢核
+     */
+    let isRegistering = true;
+    const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
+    const toggleRegisterText = document.getElementById('toggleRegisterText');
+
+    /**
+     * 更新「要掛號 / 不掛號」切換按鈕視覺狀態
      */
     function updateRegisterUI() {
       if (isRegistering) {
@@ -1181,15 +1305,14 @@
     toggleRegisterBtn.addEventListener('click', function() {
       isRegistering = !isRegistering;
       updateRegisterUI();
-      checkClinicDoctorRequirement();
     });
 
     /**
-     * 驗證民國年、月、日數值合理性並轉換為西元 YYYY-MM-DD 標準字串
-     * @param {number} rocYear - 民國年份數值
-     * @param {number} rocMonth - 月份數值 (1~12)
-     * @param {number} rocDay - 日期數值 (1~31)
-     * @returns {{valid: boolean, message?: string, formattedDate?: string}} 驗證結果物件
+     * 檢核民國出生年月日是否為真實存在的有效日期（含閏年與大小月檢查）並轉為西元格式
+     * @param {number} rocYear 民國年
+     * @param {number} rocMonth 月份
+     * @param {number} rocDay 日期
+     * @returns {Object} 包含 valid 布林值、錯誤訊息或格式化後之 YYYY-MM-DD 西元生日
      */
     function validateAndFormatRocDate(rocYear, rocMonth, rocDay) {
       if (isNaN(rocYear) || isNaN(rocMonth) || isNaN(rocDay)) {
@@ -1221,22 +1344,14 @@
       };
     }
 
-    // ==========================================
-    // 7. 表單送出處理（支援新增與改期）
-    // ==========================================
-
+    /**
+     * 8. 表單送出事件處理（支援新增預約與改期儲存）
+     */
     document.getElementById('bookingForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const submitBtn = document.getElementById('submitBtn');
       const statusMsg = document.getElementById('statusMsg');
-      const timeVal = document.getElementById('time').value;
-
-      if (!isValidBookingTime(timeVal)) {
-        statusMsg.className = 'status-msg error';
-        statusMsg.innerText = `❌ 預約時間請設定於營業時段 (${MIN_BOOKING_TIME} ~ ${MAX_BOOKING_TIME}) 內`;
-        return;
-      }
 
       const rocYearVal = parseInt(document.getElementById('rocYear').value, 10);
       const rocMonthVal = parseInt(document.getElementById('rocMonth').value, 10);
@@ -1260,29 +1375,36 @@
       const payload = {
         action: isReschedule ? 'reschedule' : 'create',
         date: submittedDate,
-        time: timeVal,
+        time: document.getElementById('time').value,
         name: document.getElementById('name').value.trim(),
         birthday: dateValidation.formattedDate,
         staff: document.getElementById('staff').value,
         content: document.getElementById('content').value.trim(),
         registerStatus: isRegistering ? '是' : '否',
-        doctor: isRegistering ? document.getElementById('doctor').value.trim() : ''
+        doctor: document.getElementById('doctor').value.trim()
       };
 
+      // 改期模式下同時傳遞原預約資訊與原掛號狀態，供後端判斷退掛或改掛邏輯
       if (isReschedule) {
         payload.eventId = editingBooking.eventId;
         payload.originalDate = editingBooking.originalDate;
         payload.originalTime = editingBooking.originalTime;
+        payload.originalRegisterStatus = editingBooking.originalRegisterStatus;
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       try {
-        const response = await fetchWithTimeout(API_URL, {
+        const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload),
+          signal: controller.signal,
           redirect: 'follow'
         });
 
+        clearTimeout(timeoutId);
         const result = await response.json();
 
         if (result.status === 'success') {
@@ -1298,9 +1420,10 @@
           throw new Error(result.message);
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         statusMsg.className = 'status-msg error';
         if (error.name === 'AbortError') {
-          statusMsg.innerText = '❌ 連線逾時，請檢查預約表及日曆是否預約成功。';
+          statusMsg.innerText = '❌ 連線逾時，請檢查網路狀況後再試一次。';
         } else {
           statusMsg.innerText = '❌ 發生錯誤：' + (error.message || '連線異常，請稍後再試。');
         }
@@ -1310,11 +1433,12 @@
       }
     });
 
-    // 頁面 DOM 載入完成後啟動初始化流程
+    // 頁面 DOM 載入完成後執行初始化程序
     window.addEventListener('DOMContentLoaded', () => {
       initDateConstraints();
       initQuickTags();
-      loadInitData();
+      loadStaffList();
+      loadClinicSchedule();
     });
   </script>
 
