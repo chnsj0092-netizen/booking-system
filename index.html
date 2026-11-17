@@ -593,7 +593,7 @@
   <script>
     /**
      * ==========================================
-     * 全域常數與系統狀態變數定義
+     * 全域常數與系統狀態變數定義 (V2.1)
      * ==========================================
      */
     // 後端 GAS Web App 部署網址
@@ -977,15 +977,17 @@
       document.getElementById('rocDay').value = '';
 
       if (item.birthday) {
-        const rocMatch = item.birthday.match(/(\d+)年(\d+)月(\d+)日/);
+        const cleanBday = String(item.birthday).replace(/^['\s]+|\s+$/g, '');
+        const rocMatch = cleanBday.match(/(\d+)年(\d+)月(\d+)日/);
         if (rocMatch) {
           document.getElementById('rocYear').value = parseInt(rocMatch[1], 10);
           document.getElementById('rocMonth').value = parseInt(rocMatch[2], 10);
           document.getElementById('rocDay').value = parseInt(rocMatch[3], 10);
         } else {
-          const parts = item.birthday.split('-');
+          const parts = cleanBday.split('-');
           if (parts.length === 3) {
-            document.getElementById('rocYear').value = parseInt(parts[0], 10) - 1911;
+            const firstNum = parseInt(parts[0], 10);
+            document.getElementById('rocYear').value = firstNum > 1911 ? firstNum - 1911 : firstNum;
             document.getElementById('rocMonth').value = parseInt(parts[1], 10);
             document.getElementById('rocDay').value = parseInt(parts[2], 10);
           }
